@@ -1,0 +1,3878 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>جدول كارنو - Karnaugh Map Solver v3</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f8fafc;
+      color: #1e293b;
+      min-height: 100vh;
+      line-height: 1.5;
+      font-size: 15px;
+    }
+
+    /* Header */
+    .header {
+      background: #ffffff;
+      border-bottom: 2px solid #e2e8f0;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #059669, #10b981);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: 900;
+      font-size: 24px;
+      box-shadow: 0 3px 8px rgba(5, 150, 105, 0.3);
+    }
+
+    .logo h1 {
+      font-size: 20px;
+      font-weight: 800;
+      color: #0f172a;
+    }
+
+    .logo p {
+      font-size: 12px;
+      color: #64748b;
+      font-weight: 600;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .toolbar .tool-group {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: #f1f5f9;
+      padding: 4px 6px;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .toolbar button {
+      padding: 6px 14px;
+      border: 1px solid transparent;
+      background: transparent;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      color: #334155;
+      transition: all 0.15s;
+    }
+
+    .toolbar button:hover {
+      background: #e2e8f0;
+      color: #0f172a;
+    }
+
+    .toolbar button.active {
+      background: #059669;
+      color: #fff;
+      border-color: #059669;
+      box-shadow: 0 2px 4px rgba(5, 150, 105, 0.3);
+    }
+
+    .toolbar button.btn-action {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+    }
+
+    .toolbar button.btn-action:hover {
+      background: #f8fafc;
+      border-color: #94a3b8;
+    }
+
+    /* Main Container */
+    .main {
+      max-width: 1160px;
+      margin: 0 auto;
+      padding: 20px 16px;
+    }
+
+    .main-container {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .side-by-side {
+      display: flex;
+      gap: 16px;
+      align-items: stretch;
+    }
+
+    .side-by-side>.card {
+      flex: 1 1 0;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .side-by-side>.card .card-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      overflow: hidden;
+    }
+
+    .card-header {
+      background: #f8fafc;
+      border-bottom: 1px solid #e2e8f0;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .card-header h2 {
+      font-size: 15px;
+      font-weight: 700;
+      color: #334155;
+    }
+
+    .card-header span {
+      font-size: 12px;
+      color: #94a3b8;
+      font-family: monospace;
+      direction: ltr;
+    }
+
+    .card-body {
+      padding: 16px 18px;
+    }
+
+    /* Expression Input Row */
+    .expr-row {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+
+    .expr-field {
+      flex: 1;
+      min-width: 260px;
+    }
+
+    .expr-field label,
+    .var-field label {
+      display: block;
+      font-size: 14px;
+      font-weight: 700;
+      color: #334155;
+      margin-bottom: 6px;
+    }
+
+    .expr-field input,
+    .var-field input {
+      width: 100%;
+      padding: 11px 14px;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 17px;
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-weight: 600;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      direction: ltr;
+    }
+
+    .expr-field input:focus,
+    .var-field input:focus {
+      border-color: #059669;
+      box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.18);
+    }
+
+    .var-field {
+      width: 160px;
+    }
+
+    .btn-field {
+      display: flex;
+      align-items: flex-end;
+    }
+
+    .ok-btn-inline {
+      padding: 11px 28px;
+      font-size: 16px;
+      font-weight: 800;
+      background: #059669;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      height: 46px;
+      margin-top: 26px;
+      box-shadow: 0 2px 6px rgba(5, 150, 105, 0.3);
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+
+    .ok-btn-inline:hover {
+      background: #047857;
+      transform: translateY(-1px);
+    }
+
+    .ok-btn-inline:active {
+      transform: translateY(0);
+    }
+
+    .ok-btn-inline:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .var-field p,
+    .expr-hint {
+      font-size: 12px;
+      color: #64748b;
+      margin-top: 4px;
+    }
+
+    .error-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #fef2f2;
+      color: #dc2626;
+      font-size: 13px;
+      border-radius: 8px;
+      border: 1px solid #fecaca;
+      padding: 10px 14px;
+      margin-top: 10px;
+      font-weight: 600;
+    }
+
+    /* K-Map Table */
+    .kmap-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      direction: ltr;
+      overflow-x: auto;
+      padding: 6px;
+    }
+
+    .kmap-table {
+      border-collapse: collapse;
+      margin: 0 auto;
+      user-select: none;
+    }
+
+    .kmap-table th,
+    .kmap-table td {
+      border: 2px solid #334155;
+      text-align: center;
+    }
+
+    .kmap-table th {
+      background: #f1f5f9;
+      font-weight: 700;
+      padding: 6px 10px;
+      font-size: 15px;
+      font-family: monospace;
+      min-width: 56px;
+      color: #1e293b;
+    }
+
+    .corner-cell {
+      position: relative;
+      width: 58px;
+      min-width: 58px;
+      height: 48px;
+      background: #f1f5f9 !important;
+      padding: 0 !important;
+    }
+
+    .corner-line {
+      position: absolute;
+      background: #334155;
+      width: 1.5px;
+      height: 142%;
+      top: -21%;
+      left: 50%;
+      transform: rotate(-45deg);
+      transform-origin: center center;
+    }
+
+    .corner-row-vars {
+      position: absolute;
+      bottom: 3px;
+      left: 5px;
+      font-size: 14px;
+      font-weight: 800;
+      color: #059669;
+      font-family: monospace;
+      z-index: 1;
+    }
+
+    .corner-col-vars {
+      position: absolute;
+      top: 3px;
+      right: 5px;
+      font-size: 14px;
+      font-weight: 800;
+      color: #059669;
+      font-family: monospace;
+      z-index: 1;
+    }
+
+    .row-label {
+      background: #f1f5f9;
+      font-weight: 700;
+      padding: 6px 10px;
+      font-size: 15px;
+      font-family: monospace;
+      min-width: 54px;
+      color: #1e293b;
+    }
+
+    .cell {
+      min-width: 56px;
+      height: 52px;
+      cursor: pointer;
+      position: relative;
+      transition: background 0.12s, outline 0.12s;
+      background: #ffffff;
+    }
+
+    .cell:hover {
+      filter: brightness(0.96);
+      z-index: 2;
+    }
+
+    .cell .minterm {
+      position: absolute;
+      top: 2px;
+      left: 4px;
+      font-size: 10px;
+      color: #94a3b8;
+      font-family: monospace;
+      font-weight: 600;
+    }
+
+    .cell .value {
+      font-size: 21px;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .cell[data-v="1"] .value {
+      color: #0f172a;
+    }
+
+    .cell[data-v="X"] .value {
+      color: #d97706;
+    }
+
+    .cell[data-v="0"] .value {
+      color: #cbd5e1;
+    }
+
+    /* Group Highlights */
+    .cell.g1 {
+      background: rgba(239, 68, 68, 0.18);
+      outline: 2.5px solid #ef4444;
+      outline-offset: -2.5px;
+    }
+
+    .cell.g2 {
+      background: rgba(59, 130, 246, 0.18);
+      outline: 2.5px solid #3b82f6;
+      outline-offset: -2.5px;
+    }
+
+    .cell.g3 {
+      background: rgba(16, 185, 129, 0.18);
+      outline: 2.5px solid #10b981;
+      outline-offset: -2.5px;
+    }
+
+    .cell.g4 {
+      background: rgba(245, 158, 11, 0.18);
+      outline: 2.5px solid #f59e0b;
+      outline-offset: -2.5px;
+    }
+
+    .cell.g5 {
+      background: rgba(139, 92, 246, 0.18);
+      outline: 2.5px solid #8b5cf6;
+      outline-offset: -2.5px;
+    }
+
+    .cell.g6 {
+      background: rgba(6, 182, 212, 0.18);
+      outline: 2.5px solid #06b6d4;
+      outline-offset: -2.5px;
+    }
+
+    .cell.g7 {
+      background: rgba(236, 72, 153, 0.18);
+      outline: 2.5px solid #ec4899;
+      outline-offset: -2.5px;
+    }
+
+    .cell.g8 {
+      background: rgba(249, 115, 22, 0.18);
+      outline: 2.5px solid #f97316;
+      outline-offset: -2.5px;
+    }
+
+    .cell.cell-hovered {
+      box-shadow: inset 0 0 0 3px #000, 0 0 8px rgba(0, 0, 0, 0.3) !important;
+      z-index: 10 !important;
+    }
+
+    /* Results */
+    .result-modes {
+      display: flex;
+      gap: 6px;
+      justify-content: center;
+      margin-bottom: 10px;
+    }
+
+    .result-modes button {
+      padding: 5px 12px;
+      font-size: 13px;
+      font-weight: 700;
+      border-radius: 6px;
+      border: 1px solid #cbd5e1;
+      background: #f8fafc;
+      cursor: pointer;
+      color: #475569;
+      transition: all 0.15s;
+    }
+
+    .result-modes button.active {
+      background: #059669;
+      color: #fff;
+      border-color: #059669;
+    }
+
+    .result-box {
+      padding: 12px 16px;
+      background: #f0fdf4;
+      border: 2px solid #86efac;
+      border-radius: 8px;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .result-expr {
+      font-size: 23px;
+      font-weight: 900;
+      color: #059669;
+      font-family: monospace;
+      direction: ltr;
+      word-break: break-all;
+    }
+
+    .result-extra {
+      font-size: 14px;
+      font-weight: 700;
+      color: #0284c7;
+      font-family: monospace;
+      direction: ltr;
+      margin-top: 4px;
+    }
+
+    .group-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      margin-top: 8px;
+      direction: ltr;
+    }
+
+    .group-tag {
+      padding: 4px 12px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: monospace;
+      font-weight: 700;
+      border: 1.5px solid;
+      cursor: pointer;
+      transition: transform 0.1s, box-shadow 0.1s;
+    }
+
+    .group-tag:hover {
+      transform: scale(1.05);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Steps Breakdown */
+    .steps-container {
+      margin-top: 10px;
+      border-top: 1px solid #e2e8f0;
+      padding-top: 10px;
+    }
+
+    .step-item {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 7px 12px;
+      margin-bottom: 6px;
+      font-size: 13px;
+    }
+
+    /* Circuit */
+    .circuit-modes {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 6px;
+      flex-wrap: wrap;
+    }
+
+    .circuit-modes button {
+      padding: 4px 10px;
+      border: 1px solid #cbd5e1;
+      background: #fff;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 700;
+      transition: all 0.15s;
+    }
+
+    .circuit-modes button:hover {
+      background: #f1f5f9;
+    }
+
+    .circuit-modes button.active {
+      background: #059669;
+      color: #fff;
+      border-color: #059669;
+    }
+
+    .circuit-wrap {
+      position: relative;
+      overflow-x: auto;
+      display: flex;
+      justify-content: center;
+      padding: 6px;
+      background: #ffffff;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      min-height: 120px;
+    }
+
+    .circuit-wrap canvas {
+      border-radius: 6px;
+    }
+
+    .circuit-gate-tooltip {
+      position: absolute;
+      pointer-events: none;
+      background: rgba(15, 23, 42, 0.94);
+      color: #ffffff;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: 'JetBrains Mono', 'Segoe UI Mono', monospace;
+      direction: ltr;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35), 0 2px 6px rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(56, 189, 248, 0.6);
+      backdrop-filter: blur(8px);
+      z-index: 100;
+      white-space: nowrap;
+      transform: translate(-50%, -120%);
+      transition: opacity 0.1s ease;
+    }
+
+    .circuit-gate-tooltip::after {
+      content: '';
+      position: absolute;
+      bottom: -6px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-width: 6px 6px 0;
+      border-style: solid;
+      border-color: rgba(15, 23, 42, 0.94) transparent transparent transparent;
+      display: block;
+      width: 0;
+    }
+
+    .circuit-gate-tooltip .tt-title {
+      font-size: 11px;
+      color: #93c5fd;
+      font-weight: 700;
+      margin-bottom: 3px;
+      direction: rtl;
+      text-align: center;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+
+    .circuit-gate-tooltip .tt-expr {
+      font-size: 14.5px;
+      color: #38bdf8;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      text-align: center;
+    }
+
+    /* Truth Table */
+    .truth-table-wrap {
+      overflow-x: auto;
+      direction: ltr;
+    }
+
+    .truth-table {
+      border-collapse: collapse;
+      width: 100%;
+      font-size: 13.5px;
+    }
+
+    .truth-table th,
+    .truth-table td {
+      border: 1.5px solid #cbd5e1;
+      padding: 3.5px 8px;
+      text-align: center;
+    }
+
+    .truth-table th {
+      background: #f1f5f9;
+      font-weight: 800;
+      font-family: monospace;
+      color: #1e293b;
+      font-size: 13.5px;
+    }
+
+    .truth-table td {
+      font-family: monospace;
+      font-size: 13.5px;
+      height: 22px;
+    }
+
+    .truth-table tr:hover td {
+      background: #f8fafc;
+    }
+
+    .tt-1 {
+      background: #ecfdf5 !important;
+      font-weight: 800;
+      color: #059669;
+    }
+
+    .tt-x {
+      background: #fffbeb !important;
+      color: #d97706;
+      font-weight: 700;
+    }
+
+    /* Flexible Standalone / Dual Floating Window (Truth Table on Left, Circuit on Right) */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: transparent;
+      pointer-events: none;
+      z-index: 9999;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.15s ease, visibility 0.15s ease;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal-card {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(0, 0, 0, 0.12);
+      width: 95%;
+      max-width: 1180px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      z-index: 10000;
+      pointer-events: auto;
+      resize: both;
+      min-width: 320px;
+      min-height: 240px;
+      transition: max-width 0.2s ease;
+    }
+
+    .modal-card.maximized {
+      top: 2% !important;
+      left: 2% !important;
+      width: 96vw !important;
+      height: 96vh !important;
+      max-width: 96vw !important;
+      transform: none !important;
+    }
+
+    .modal-header {
+      padding: 8px 12px;
+      background: #f8fafc;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: grab;
+      user-select: none;
+      flex-shrink: 0;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .modal-header:active {
+      cursor: grabbing;
+    }
+
+    .modal-header h2 {
+      font-size: 14px;
+      font-weight: 800;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      pointer-events: none;
+      margin: 0;
+    }
+
+    .modal-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .modal-view-tabs {
+      display: flex;
+      align-items: center;
+      background: #e2e8f0;
+      padding: 2px;
+      border-radius: 6px;
+      gap: 2px;
+    }
+
+    .modal-view-tab {
+      background: transparent;
+      border: none;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #475569;
+      padding: 3px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .modal-view-tab:hover {
+      color: #0f172a;
+    }
+
+    .modal-view-tab.active {
+      background: #ffffff;
+      color: #059669;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .modal-action-btn {
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      font-size: 13px;
+      font-weight: 700;
+      color: #475569;
+      cursor: pointer;
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+
+    .modal-action-btn:hover {
+      background: #e2e8f0;
+      color: #0f172a;
+    }
+
+    .modal-close-btn:hover {
+      background: #fee2e2;
+      color: #ef4444;
+      border-color: #fca5a5;
+    }
+
+    .modal-dual-body {
+      display: flex;
+      flex-direction: row;
+      gap: 12px;
+      padding: 12px;
+      overflow-y: auto;
+      max-height: calc(85vh - 50px);
+      flex: 1;
+    }
+
+    .modal-card.maximized .modal-dual-body {
+      max-height: calc(96vh - 50px);
+    }
+
+    .modal-left-col {
+      flex: 0 0 340px;
+      min-width: 270px;
+      display: flex;
+      flex-direction: column;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 10px;
+    }
+
+    .modal-right-col {
+      flex: 1;
+      min-width: 320px;
+      display: flex;
+      flex-direction: column;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 10px;
+    }
+
+    .modal-info-banner {
+      background: #f0fdf4;
+      border: 1.5px solid #86efac;
+      border-radius: 6px;
+      padding: 5px 10px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+      font-size: 12px;
+    }
+
+    .modal-info-banner span {
+      font-size: 12px;
+      font-weight: 700;
+      color: #065f46;
+      font-family: monospace;
+      direction: ltr;
+    }
+
+    @media (max-width: 860px) {
+      .modal-dual-body {
+        flex-direction: column;
+      }
+
+      .modal-left-col {
+        flex: 1 1 auto;
+        width: 100% !important;
+      }
+
+      .modal-right-col {
+        flex: 1 1 auto;
+        width: 100% !important;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .side-by-side {
+        flex-direction: column;
+      }
+
+      .side-by-side>.card {
+        max-width: 100%;
+      }
+
+      .var-field {
+        width: 100%;
+      }
+
+      .ok-btn-inline {
+        width: 100%;
+        margin-top: 8px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="header">
+    <div class="logo">
+      <div class="logo-icon">K</div>
+      <div>
+        <h1>جدول كارنو</h1>
+        <p>Karnaugh Map Solver & Circuit Generator</p>
+      </div>
+    </div>
+    <div class="toolbar" id="toolbar">
+      <div class="tool-group">
+        <span style="font-size:12px;font-weight:700;color:#64748b;padding:0 4px;">المتغيرات:</span>
+        <button onclick="setNumVars(2)" id="v2">2</button>
+        <button onclick="setNumVars(3)" id="v3">3</button>
+        <button onclick="setNumVars(4)" id="v4" class="active">4</button>
+      </div>
+      <div class="tool-group">
+        <button class="btn-action" onclick="fillRandom()" title="توليد معادلة عشوائية في حقل الإدخال">عشوائي</button>
+        <button class="btn-action" onclick="toggleTruthTable()" id="ttBtn">جدول الحقيقة</button>
+        <button class="btn-action" onclick="toggleCircuit()" id="circuitBtn">التمثيل المنطقي</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="main-container">
+      <!-- 1. Expression Input Card -->
+      <div class="card" id="exprCard">
+        <div class="card-body">
+          <div class="expr-row">
+            <div class="expr-field">
+              <label>المعادلة المنطقية</label>
+              <input type="text" id="exprInput" placeholder="مثال: A'B + AB' أو a'b + ab'" oninput="updateOkBtnState()"
+                onkeydown="if(event.key==='Enter')handleOK()">
+              <div class="expr-hint">يدعم الحروف اللاتينية A, B, C, D (كبيرة أو صغيرة)، النفي بـ <code>'</code> أو
+                <code>~</code>، والعمليات <code>+</code> و <code>الأقواس</code></div>
+            </div>
+            <div class="var-field">
+              <label>المتغيرات</label>
+              <input type="text" id="varInput" value="A/B/C/D" placeholder="A/B/C/D" oninput="updateOkBtnState()"
+                onkeydown="if(event.key==='Enter')handleOK()">
+              <p>مفصولة بـ <code>/</code></p>
+            </div>
+            <div class="btn-field">
+              <button class="ok-btn-inline" id="exprOkBtn" onclick="handleOK()">OK</button>
+            </div>
+          </div>
+          <div id="errorBox" class="error-box" style="display:none;"></div>
+        </div>
+      </div>
+
+      <!-- 2. K-Map + Result Side by Side -->
+      <div class="side-by-side">
+        <!-- K-Map Card -->
+        <div class="card">
+          <div class="card-header">
+            <h2>جدول كارنو التفاعلي (اضغط على الخلية للتبديل 0 ➜ 1 ➜ X)</h2>
+            <span>Interactive K-Map</span>
+          </div>
+          <div class="card-body">
+            <div class="kmap-wrap">
+              <table class="kmap-table" id="kmapTable"></table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Result Card -->
+        <div class="card" id="resultCard">
+          <div class="card-header">
+            <h2>النتيجة والتبسيط</h2>
+            <span>Simplified Result</span>
+          </div>
+          <div class="card-body">
+            <div class="result-modes">
+              <button id="rmSOP" class="active" onclick="setResultMode('SOP')">SOP (مجموع الجداءات)</button>
+              <button id="rmPOS" onclick="setResultMode('POS')">POS (جداء المجاميع)</button>
+              <button id="rmFactored" onclick="setResultMode('Factored')">المعادلة المنطقية المختصرة</button>
+            </div>
+            <div class="result-box">
+              <div class="result-expr" id="resultExpr" style="color:#94a3b8;">F = ...</div>
+              <div class="result-extra" id="resultExtra" style="display:none;"></div>
+            </div>
+            <div class="group-tags" id="groupTags" title="مرر الفأرة فوق أي مجموعة لتظليلها في جدول كارنو"></div>
+
+            <div id="stepsSection" class="steps-container" style="display:none;">
+              <div style="font-weight:700; font-size:13px; margin-bottom:6px; color:#334155;">📌 تفاصيل التبسيط
+                والمجموعات:</div>
+              <div id="stepsList"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Flexible Draggable, Resizable & Maximizable Floating Window -->
+  <div class="modal-overlay" id="dualModal">
+    <div class="modal-card" id="dualModalCard">
+      <div class="modal-header" id="dualModalHeader" title="اضغط واسحب لتحريك النافذة في أي اتجاه">
+        <h2 id="modalTitleText">📊 جدول الحقيقة &amp; ⚡ التمثيل المنطقي</h2>
+        <div class="modal-header-actions">
+          <div class="modal-view-tabs">
+            <button class="modal-view-tab active" id="tabBtnAll" onclick="setModalMode('all')"
+              title="عرض جدول الحقيقة والتمثيل المنطقي معاً">الكل معاً</button>
+            <button class="modal-view-tab" id="tabBtnTT" onclick="setModalMode('tt')" title="عرض جدول الحقيقة فقط">📊
+              الجدول</button>
+            <button class="modal-view-tab" id="tabBtnCirc" onclick="setModalMode('circ')"
+              title="عرض التمثيل المنطقي فقط">⚡ المخطط</button>
+          </div>
+          <button class="modal-action-btn" id="modalMaxBtn" onclick="toggleMaximizeModal()"
+            title="تكبير / استعادة حجم الصفحة">⛶</button>
+          <button class="modal-action-btn modal-close-btn" onclick="closeDualModal()" title="إغلاق">✕</button>
+        </div>
+      </div>
+      <div class="modal-dual-body">
+        <!-- Right Column: Logic Gate Diagram (اليمين) -->
+        <div class="modal-right-col" id="modalRightCol">
+          <div
+            style="font-size:12.5px; font-weight:800; color:#0f172a; margin-bottom:6px; display:flex; align-items:center; justify-content:space-between;">
+            <span>⚡ التمثيل المنطقي بالبوابات</span>
+          </div>
+          <div class="circuit-modes">
+            <button class="active" id="cmFactored" onclick="drawCirc('Factored')">المعادلة المنطقية المختصرة</button>
+            <button id="cmANDOR" onclick="drawCirc('ANDOR')">تمثيل عادي (SOP)</button>
+            <button id="cmNAND" onclick="drawCirc('NAND')">NAND فقط (ديمورقان)</button>
+            <button id="cmNOR" onclick="drawCirc('NOR')">NOR فقط (ديمورقان)</button>
+          </div>
+          <div id="circuitExprBox"
+            style="display:none; margin-bottom:6px; padding:4px 8px; background:#f0fdf4; border:1px solid #86efac; border-radius:6px; direction:ltr; text-align:center;">
+            <div id="circuitExprText"></div>
+          </div>
+          <div class="circuit-wrap">
+            <div id="circuitGateTooltip" class="circuit-gate-tooltip" style="display:none;"></div>
+            <canvas id="circuitCanvas"></canvas>
+          </div>
+        </div>
+
+        <!-- Left Column: Truth Table (اليسار) -->
+        <div class="modal-left-col" id="modalLeftCol">
+          <div
+            style="font-size:13px; font-weight:800; color:#0f172a; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+            📊 جدول الحقيقة
+          </div>
+          <div class="modal-info-banner">
+            <div>المتغيرات: <span id="modalVarsText">A, B, C, D</span></div>
+            <div>المعادلة: <span id="modalExprText">F = ...</span></div>
+          </div>
+          <div class="truth-table-wrap">
+            <table class="truth-table" id="truthTable"></table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ===== STATE =====
+    let numVars = 4;
+    let kmap = [];
+    let result = null;
+    let showTT = false;
+    let showCirc = false;
+    let currentResultMode = 'SOP'; // 'SOP', 'POS', 'Factored'
+    let circuitMode = 'Factored';
+
+    // ===== KARNAUGH UTILS =====
+    function grayCode(n) {
+      return Array.from({ length: 1 << n }, (_, i) => i ^ (i >> 1));
+    }
+
+    const GRAY1 = grayCode(1); // [0, 1]
+    const GRAY2 = grayCode(2); // [0, 1, 3, 2]
+
+    function getKMapSize(nv) {
+      if (nv === 2) return { rows: 2, cols: 2 };
+      if (nv === 3) return { rows: 2, cols: 4 };
+      return { rows: 4, cols: 4 };
+    }
+
+    function initKMap(nv) {
+      const { rows, cols } = getKMapSize(nv);
+      return Array.from({ length: rows * cols }, () => 0);
+    }
+
+    function getKMapLabels(nv) {
+      const varNames = ['A', 'B', 'C', 'D'].slice(0, nv);
+      let rowLabels, colLabels;
+      if (nv === 2) {
+        rowLabels = GRAY1.map(v => v.toString(2));
+        colLabels = GRAY1.map(v => v.toString(2));
+      } else if (nv === 3) {
+        rowLabels = GRAY1.map(v => v.toString(2));
+        colLabels = GRAY2.map(v => v.toString(2).padStart(2, '0'));
+      } else {
+        rowLabels = GRAY2.map(v => v.toString(2).padStart(2, '0'));
+        colLabels = GRAY2.map(v => v.toString(2).padStart(2, '0'));
+      }
+      return { rowLabels, colLabels, varNames };
+    }
+
+    function getMinterm(row, col, nv) {
+      if (nv === 2) return GRAY1[row] * 2 + GRAY1[col];
+      if (nv === 3) return GRAY1[row] * 4 + GRAY2[col];
+      return GRAY2[row] * 4 + GRAY2[col];
+    }
+
+    function getVarValues(cellIdx, nv) {
+      const { cols } = getKMapSize(nv);
+      const row = Math.floor(cellIdx / cols);
+      const col = cellIdx % cols;
+      if (nv === 2) return [GRAY1[row] === 1, GRAY1[col] === 1];
+      if (nv === 3) return [GRAY1[row] === 1, (GRAY2[col] & 2) !== 0, (GRAY2[col] & 1) !== 0];
+      return [(GRAY2[row] & 2) !== 0, (GRAY2[row] & 1) !== 0, (GRAY2[col] & 2) !== 0, (GRAY2[col] & 1) !== 0];
+    }
+
+    function extractTerm(group, nv) {
+      const { rows, cols } = getKMapSize(nv);
+      if (group.length === rows * cols) return '1';
+      const varNames = ['A', 'B', 'C', 'D'].slice(0, nv);
+      const terms = [];
+      for (let v = 0; v < nv; v++) {
+        const vals = group.map(c => getVarValues(c, nv)[v]);
+        if (vals.every(x => x === true)) terms.push(varNames[v]);
+        else if (vals.every(x => x === false)) terms.push(varNames[v] + "'");
+      }
+      return terms.length > 0 ? terms.join('') : '1';
+    }
+
+    function extractPOSTerm(group, nv) {
+      const { rows, cols } = getKMapSize(nv);
+      if (group.length === rows * cols) return '0';
+      const varNames = ['A', 'B', 'C', 'D'].slice(0, nv);
+      const terms = [];
+      for (let v = 0; v < nv; v++) {
+        const vals = group.map(c => getVarValues(c, nv)[v]);
+        if (vals.every(x => x === true)) terms.push(varNames[v] + "'");
+        else if (vals.every(x => x === false)) terms.push(varNames[v]);
+      }
+      if (terms.length === 0) return '0';
+      return terms.length > 1 ? '(' + terms.join(' + ') + ')' : terms[0];
+    }
+
+    function findAllGroups(km, nv, targetVal = 1) {
+      const { rows, cols } = getKMapSize(nv);
+      const total = rows * cols;
+      const validCells = new Set();
+      for (let i = 0; i < total; i++) {
+        if (km[i] === targetVal || km[i] === 'X') validCells.add(i);
+      }
+      const seen = new Set();
+      const groups = [];
+      const sizes = [1, 2, 4, 8, 16].filter(s => s <= total);
+
+      for (const size of sizes) {
+        const dims = [];
+        for (let r = 1; r <= rows; r++) {
+          for (let c = 1; c <= cols; c++) {
+            if (r * c === size && (r & (r - 1)) === 0 && (c & (c - 1)) === 0) {
+              dims.push([r, c]);
+            }
+          }
+        }
+        for (const [gr, gc] of dims) {
+          for (let sr = 0; sr < rows; sr++) {
+            for (let sc = 0; sc < cols; sc++) {
+              const cells = [];
+              let valid = true;
+              for (let dr = 0; dr < gr; dr++) {
+                for (let dc = 0; dc < gc; dc++) {
+                  const r = (sr + dr) % rows, c = (sc + dc) % cols;
+                  const cell = r * cols + c;
+                  cells.push(cell);
+                  if (!validCells.has(cell)) { valid = false; break; }
+                }
+                if (!valid) break;
+              }
+              if (valid) {
+                const key = [...cells].sort((a, b) => a - b).join(',');
+                if (!seen.has(key)) {
+                  seen.add(key);
+                  groups.push(cells);
+                }
+              }
+            }
+          }
+        }
+      }
+      return groups;
+    }
+
+    function findPrimeImplicants(km, nv, targetVal = 1) {
+      const all = findAllGroups(km, nv, targetVal);
+      const pis = [], seenTerms = new Set();
+      for (const g of all) {
+        let maximal = true;
+        for (const o of all) {
+          if (g === o) continue;
+          const os = new Set(o);
+          if (g.length < os.size && [...g].every(c => os.has(c))) {
+            maximal = false;
+            break;
+          }
+        }
+        if (maximal) {
+          const term = targetVal === 1 ? extractTerm(g, nv) : extractPOSTerm(g, nv);
+          if (!seenTerms.has(term)) {
+            seenTerms.add(term);
+            pis.push(g);
+          }
+        }
+      }
+      return pis;
+    }
+
+    function countLiterals(term) {
+      if (term === '1' || term === '0') return 0;
+      return (term.match(/[A-Za-z]/g) || []).length;
+    }
+
+    function minimumCover(availablePIs, uncoveredOnes, nv) {
+      if (uncoveredOnes.length === 0 || availablePIs.length === 0) return [];
+      var piCoverage = [], mintermToPIs = [];
+      for (var pi = 0; pi < availablePIs.length; pi++) {
+        var cov = [];
+        for (var m = 0; m < uncoveredOnes.length; m++) {
+          cov.push(availablePIs[pi].indexOf(uncoveredOnes[m]) !== -1);
+        }
+        piCoverage.push(cov);
+      }
+      for (var m = 0; m < uncoveredOnes.length; m++) {
+        var covering = [];
+        for (var pi = 0; pi < availablePIs.length; pi++) {
+          if (piCoverage[pi][m]) covering.push(pi);
+        }
+        mintermToPIs.push(covering);
+      }
+
+      var best = { count: Infinity, literals: Infinity, selection: null };
+
+      function search(sel, cov, nSel, nLit) {
+        if (nSel >= best.count) return;
+        if (nSel === best.count - 1 && nLit >= best.literals) return;
+
+        var fu = -1;
+        for (var m = 0; m < uncoveredOnes.length; m++) {
+          if (!cov[m]) { fu = m; break; }
+        }
+        if (fu === -1) {
+          if (nSel < best.count || (nSel === best.count && nLit < best.literals)) {
+            best.count = nSel;
+            best.literals = nLit;
+            best.selection = sel.slice();
+          }
+          return;
+        }
+
+        for (var k = 0; k < mintermToPIs[fu].length; k++) {
+          var pidx = mintermToPIs[fu][k];
+          if (sel.indexOf(pidx) !== -1) continue;
+          var nc = cov.slice();
+          for (var m = 0; m < uncoveredOnes.length; m++) {
+            if (!cov[m] && piCoverage[pidx][m]) nc[m] = true;
+          }
+          var tl = countLiterals(extractTerm(availablePIs[pidx], nv));
+          sel.push(pidx);
+          search(sel, nc, nSel + 1, nLit + tl);
+          sel.pop();
+        }
+      }
+
+      search([], new Array(uncoveredOnes.length).fill(false), 0, 0);
+
+      if (!best.selection) {
+        var greedy = [], gc = new Array(uncoveredOnes.length).fill(false), used = new Set(), ch = true;
+        while (ch) {
+          ch = false; var bp = -1, bc = 0;
+          for (var pi = 0; pi < availablePIs.length; pi++) {
+            if (used.has(pi)) continue;
+            var cnt = 0;
+            for (var m = 0; m < uncoveredOnes.length; m++) if (!gc[m] && piCoverage[pi][m]) cnt++;
+            if (cnt > bc) { bc = cnt; bp = pi; }
+          }
+          if (bp >= 0 && bc > 0) {
+            greedy.push(bp); used.add(bp);
+            for (var m = 0; m < uncoveredOnes.length; m++) if (!gc[m] && piCoverage[bp][m]) gc[m] = true;
+            ch = true;
+          }
+        }
+        return greedy.map(i => availablePIs[i]);
+      }
+      return best.selection.map(i => availablePIs[i]);
+    }
+
+    // ===== XOR / XNOR IDENTIFICATION =====
+    function checkXORPattern(terms) {
+      if (!terms || terms.length < 2) return null;
+
+      // Parse all terms to literals
+      const parsed = terms.map(t => typeof t === 'string' ? parseLiterals(t) : t);
+      if (parsed.some(p => !p || p.length === 0)) return null;
+
+      // Collect all unique variables across terms
+      const varSet = new Set();
+      parsed.forEach(term => term.forEach(l => varSet.add(l.v)));
+      const vars = Array.from(varSet).sort();
+      const k = vars.length;
+      if (k < 2) return null;
+
+      // Verify that every term contains all and only these k variables
+      if (!parsed.every(term => term.length === k)) return null;
+
+      // Convert each term into a binary minterm integer relative to vars
+      const mintermIndices = [];
+      for (let term of parsed) {
+        let m = 0;
+        for (let i = 0; i < k; i++) {
+          const v = vars[i];
+          const lit = term.find(l => l.v === v);
+          if (!lit) return null;
+          if (!lit.c) { // uncomplemented = 1
+            m |= (1 << (k - 1 - i));
+          }
+        }
+        mintermIndices.push(m);
+      }
+
+      const uniqueMinterms = new Set(mintermIndices);
+      if (uniqueMinterms.size !== terms.length) return null;
+
+      function countOnes(num) {
+        let c = 0;
+        while (num > 0) { c += (num & 1); num >>= 1; }
+        return c;
+      }
+
+      // 2-variable XOR / XNOR
+      if (k === 2 && terms.length === 2) {
+        if (uniqueMinterms.has(1) && uniqueMinterms.has(2)) {
+          return { expr: `${vars[0]} ⊕ ${vars[1]}`, type: "XOR", vars: vars };
+        }
+        if (uniqueMinterms.has(0) && uniqueMinterms.has(3)) {
+          return { expr: `${vars[0]} ⊙ ${vars[1]}`, type: "XNOR", vars: vars };
+        }
+      }
+
+      // 3-variable XOR / XNOR (4 minterms)
+      if (k === 3 && terms.length === 4) {
+        const isOdd = Array.from(uniqueMinterms).every(m => countOnes(m) % 2 === 1);
+        if (isOdd) {
+          return { expr: `${vars[0]} ⊕ ${vars[1]} ⊕ ${vars[2]}`, type: "XOR", vars: vars };
+        }
+        const isEven = Array.from(uniqueMinterms).every(m => countOnes(m) % 2 === 0);
+        if (isEven) {
+          return { expr: `${vars[0]} ⊙ ${vars[1]} ⊙ ${vars[2]}`, type: "XNOR", vars: vars };
+        }
+      }
+
+      // 4-variable XOR / XNOR (8 minterms)
+      if (k === 4 && terms.length === 8) {
+        const isOdd = Array.from(uniqueMinterms).every(m => countOnes(m) % 2 === 1);
+        if (isOdd) {
+          return { expr: `${vars[0]} ⊕ ${vars[1]} ⊕ ${vars[2]} ⊕ ${vars[3]}`, type: "XOR", vars: vars };
+        }
+        const isEven = Array.from(uniqueMinterms).every(m => countOnes(m) % 2 === 0);
+        if (isEven) {
+          return { expr: `${vars[0]} ⊙ ${vars[1]} ⊙ ${vars[2]} ⊙ ${vars[3]}`, type: "XNOR", vars: vars };
+        }
+      }
+
+      return null;
+    }
+
+    function detectXOR(sopTerms, nv) {
+      if (!sopTerms || sopTerms.length === 0) return null;
+      return checkXORPattern(sopTerms);
+    }
+
+    // ===== ALGEBRAIC FACTORING =====
+    function parseLiterals(term) {
+      var regex = /([A-Za-z])(\d*)(['\u2019~!]*)/g;
+      var lits = [], m;
+      while ((m = regex.exec(term)) !== null) {
+        lits.push({ v: (m[1] + m[2]).toUpperCase(), c: m[3].length > 0 });
+      }
+      lits.sort((a, b) => a.v.localeCompare(b.v));
+      return lits;
+    }
+
+    function litKey(l) { return l.v + (l.c ? "'" : ''); }
+    function litEq(a, b) { return a.v === b.v && a.c === b.c; }
+
+    function commonLits(sets) {
+      if (!sets.length) return [];
+      var result = sets[0].slice();
+      for (var i = 1; i < sets.length; i++) {
+        result = result.filter(l => sets[i].some(s => litEq(s, l)));
+      }
+      return result;
+    }
+
+    function removeLits(term, toRemove) {
+      return term.filter(l => !toRemove.some(r => litEq(r, l)));
+    }
+
+    function termStrFromLits(lits) {
+      if (!lits.length) return '1';
+      return lits.map(litKey).join('');
+    }
+
+    function algebraicFactor(sopExpr) {
+      if (!sopExpr || sopExpr === '0' || sopExpr === '1') {
+        return {
+          factoredExpr: sopExpr,
+          rawFactoredExpr: sopExpr,
+          hasXOR: false,
+          xorSummary: null,
+          factoringSteps: []
+        };
+      }
+
+      var terms = sopExpr.split('+').map(t => t.trim()).filter(t => t.length > 0);
+      if (terms.length < 2) {
+        return {
+          factoredExpr: sopExpr,
+          rawFactoredExpr: sopExpr,
+          hasXOR: false,
+          xorSummary: null,
+          factoringSteps: []
+        };
+      }
+
+      // 1. Direct full XOR check
+      var directXOR = checkXORPattern(terms);
+      if (directXOR) {
+        return {
+          factoredExpr: directXOR.expr,
+          rawFactoredExpr: sopExpr,
+          hasXOR: true,
+          xorSummary: directXOR.expr,
+          factoringSteps: [
+            `تطبيق متطابقة التباين (${directXOR.type}): ${sopExpr} ➜ ${directXOR.expr}`
+          ]
+        };
+      }
+
+      // 2. Factoring with common literals & sub-term XOR recognition
+      var parsed = terms.map(parseLiterals);
+      var bestSavings = 0, bestCommon = [], bestIndices = [];
+
+      for (var i = 0; i < parsed.length; i++) {
+        for (var j = i + 1; j < parsed.length; j++) {
+          var common = commonLits([parsed[i], parsed[j]]);
+          if (!common.length) continue;
+          var indices = [i, j];
+          for (var k = 0; k < parsed.length; k++) {
+            if (k !== i && k !== j) {
+              if (common.every(lit => parsed[k].some(s => litEq(s, lit)))) {
+                indices.push(k);
+              }
+            }
+          }
+          var refined = commonLits(indices.map(idx => parsed[idx]));
+          var remParts = indices.map(idx => termStrFromLits(removeLits(parsed[idx], refined)));
+          var xorCheck = checkXORPattern(remParts);
+
+          var savings = (indices.length - 1) * refined.length + (xorCheck ? 10 : 0);
+          if (savings > bestSavings) {
+            bestSavings = savings;
+            bestCommon = refined;
+            bestIndices = indices;
+          }
+        }
+      }
+
+      if (bestIndices.length > 0 && bestCommon.length > 0) {
+        var commonStr = termStrFromLits(bestCommon);
+        var remainderParts = bestIndices.map(idx => termStrFromLits(removeLits(parsed[idx], bestCommon)));
+        remainderParts.sort();
+
+        var rawInner = remainderParts.join(' + ');
+        var rawFactored = commonStr + '(' + rawInner + ')';
+
+        var xorInner = checkXORPattern(remainderParts);
+        var factoredPart = '';
+        var steps = [];
+        var hasXOR = false;
+
+        if (xorInner) {
+          hasXOR = true;
+          factoredPart = commonStr + '(' + xorInner.expr + ')';
+          steps.push(`إخراج العامل المشترك ${commonStr}: ${rawFactored}`);
+          steps.push(`التعويض بمتطابقة (${xorInner.type}): (${rawInner}) = ${xorInner.expr}`);
+          steps.push(`المعادلة المنطقية المختصرة: ${factoredPart}`);
+        } else {
+          factoredPart = rawFactored;
+          steps.push(`إخراج العامل المشترك ${commonStr}: ${rawFactored}`);
+        }
+
+        var remainingTerms = terms.filter((_, idx) => bestIndices.indexOf(idx) === -1);
+        var all = [factoredPart].concat(remainingTerms);
+        var finalFactoredExpr = all.join(' + ');
+        var finalRawFactored = [rawFactored].concat(remainingTerms).join(' + ');
+
+        return {
+          factoredExpr: finalFactoredExpr,
+          rawFactoredExpr: finalRawFactored,
+          hasXOR: hasXOR,
+          xorSummary: hasXOR ? finalFactoredExpr : null,
+          factoringSteps: steps
+        };
+      }
+
+      return {
+        factoredExpr: sopExpr,
+        rawFactoredExpr: sopExpr,
+        hasXOR: false,
+        xorSummary: null,
+        factoringSteps: []
+      };
+    }
+
+    // ===== POS EXTRACTION =====
+    function getPOSTerms() {
+      var { rows, cols } = getKMapSize(numVars);
+      var total = rows * cols;
+      var zeros = [];
+      for (var i = 0; i < total; i++) if (kmap[i] === 0) zeros.push(i);
+      if (zeros.length === 0) return [];
+      if (zeros.length === total) return null;
+
+      var compKMap = [];
+      for (var i = 0; i < total; i++) compKMap.push(kmap[i] === 0 ? 1 : (kmap[i] === 'X' ? 'X' : 0));
+      var pis = findPrimeImplicants(compKMap, numVars, 1);
+
+      var zerosSet = new Set(zeros);
+      var essential = [], covered = new Set();
+      for (var z = 0; z < zeros.length; z++) {
+        var count = 0, lastPI = null;
+        for (var p = 0; p < pis.length; p++) {
+          if (pis[p].indexOf(zeros[z]) !== -1) { count++; lastPI = pis[p]; }
+        }
+        if (count === 1 && lastPI && essential.indexOf(lastPI) === -1) {
+          essential.push(lastPI);
+          for (var c = 0; c < lastPI.length; c++) if (zerosSet.has(lastPI[c])) covered.add(lastPI[c]);
+        }
+      }
+      var uncovered = zeros.filter(z => !covered.has(z));
+      var remaining = pis.filter(pi => essential.indexOf(pi) === -1);
+      var minCover = minimumCover(remaining, uncovered, numVars);
+      var selected = essential.concat(minCover);
+
+      var varNames = ['A', 'B', 'C', 'D'].slice(0, numVars);
+      var posTerms = [];
+      for (var g = 0; g < selected.length; g++) {
+        var group = selected[g];
+        var lits = [];
+        for (var v = 0; v < numVars; v++) {
+          var vals = group.map(c => getVarValues(c, numVars)[v]);
+          if (vals.every(x => x === true)) lits.push({ v: varNames[v], c: true });
+          else if (vals.every(x => x === false)) lits.push({ v: varNames[v], c: false });
+        }
+        posTerms.push({ lits: lits, group: group });
+      }
+      return posTerms;
+    }
+
+    // ===== COMPLETE K-MAP SOLVER =====
+    function simplifyKMap(km, nv) {
+      const { rows, cols } = getKMapSize(nv);
+      const total = rows * cols;
+      const ones = new Set();
+      const dontCares = new Set();
+      for (let i = 0; i < total; i++) {
+        if (km[i] === 1) ones.add(i);
+        else if (km[i] === 'X') dontCares.add(i);
+      }
+
+      if (ones.size === 0) {
+        return {
+          expression: '0',
+          posExpression: '0',
+          factoredExpression: '0',
+          xorExpression: null,
+          groups: [],
+          groupTerms: [],
+          essentialPIs: [],
+          steps: ['جميع خلايا جدول كارنو = 0، لذلك الناتج هو ثابت F = 0']
+        };
+      }
+
+      if (ones.size + dontCares.size === total && ones.size > 0) {
+        return {
+          expression: '1',
+          posExpression: '1',
+          factoredExpression: '1',
+          xorExpression: null,
+          groups: [[...Array(total).keys()]],
+          groupTerms: ['1'],
+          essentialPIs: [[...Array(total).keys()]],
+          steps: ['جميع الخلايا تشكل مجموعة واحدة كبرى بحجم ' + total + '، لذلك الناتج هو ثابت F = 1']
+        };
+      }
+
+      const pis = findPrimeImplicants(km, nv, 1);
+      const essential = [], covered = new Set();
+      const steps = [];
+
+      for (const one of ones) {
+        let count = 0, lastPI = null;
+        for (const pi of pis) {
+          if (pi.includes(one)) { count++; lastPI = pi; }
+        }
+        if (count === 1 && lastPI && !essential.includes(lastPI)) {
+          essential.push(lastPI);
+          for (const c of lastPI) if (ones.has(c)) covered.add(c);
+        }
+      }
+
+      const uncovered = [...ones].filter(o => !covered.has(o));
+      const remaining = pis.filter(pi => !essential.includes(pi));
+      const minCover = minimumCover(remaining, uncovered, nv);
+      const selected = [...essential, ...minCover];
+
+      const finalGroups = [];
+      for (let i = 0; i < selected.length; i++) {
+        const pi = selected[i];
+        let redundant = true;
+        for (const c of pi) {
+          if (!ones.has(c)) continue;
+          let byOthers = false;
+          for (let j = 0; j < selected.length; j++) {
+            if (i === j) continue;
+            if (selected[j].includes(c)) { byOthers = true; break; }
+          }
+          if (!byOthers) { redundant = false; break; }
+        }
+        if (!redundant) finalGroups.push(pi);
+      }
+
+      const groupTerms = finalGroups.map(g => extractTerm(g, nv));
+      const sopExpr = groupTerms.join(' + ');
+      const factoredObj = algebraicFactor(sopExpr);
+      const xorExpr = detectXOR(groupTerms, nv);
+
+      const posTerms = getPOSTerms();
+      let posExpr = '0';
+      if (!posTerms) posExpr = '0';
+      else if (posTerms.length === 0) posExpr = '1';
+      else {
+        posExpr = posTerms.map(t => {
+          var inner = t.lits.map(l => l.v + (l.c ? "'" : '')).join(' + ');
+          return t.lits.length > 1 ? '(' + inner + ')' : inner;
+        }).join('');
+      }
+
+      steps.push(`تم استخراج ${pis.length} متضمن أولي (Prime Implicants).`);
+      steps.push(`عدد المتضمنات الأولية الأساسية (Essential PIs): ${essential.length}.`);
+      finalGroups.forEach((g, idx) => {
+        const mintermsInGroup = g.map(c => {
+          const r = Math.floor(c / cols), col = c % cols;
+          return getMinterm(r, col, nv);
+        }).sort((a, b) => a - b);
+        steps.push(`المجموعة ${idx + 1}: بحجم ${g.length} خلايا m(${mintermsInGroup.join(',')}) ➜ الحد المنطقي: ${groupTerms[idx]}`);
+      });
+
+      if (factoredObj.factoringSteps && factoredObj.factoringSteps.length > 0) {
+        steps.push(`⚡ خطوات التبسيط المنطقي (استخراج العامل المشترك وبوابات XOR):`);
+        factoredObj.factoringSteps.forEach(st => steps.push(`&nbsp;&nbsp;• ${st}`));
+      }
+
+      return {
+        expression: sopExpr,
+        posExpression: posExpr,
+        factoredExpression: factoredObj.factoredExpr,
+        factoredResult: factoredObj,
+        xorExpression: factoredObj.hasXOR ? factoredObj.factoredExpr : (xorExpr ? xorExpr.expr : null),
+        groups: finalGroups,
+        groupTerms: groupTerms,
+        essentialPIs: essential,
+        steps: steps
+      };
+    }
+
+    // ===== ROBUST BOOLEAN EXPRESSION EVALUATOR =====
+    function evaluateAST(expr, varNames, assignment) {
+      let clean = expr.trim();
+
+      function evalBool(str) {
+        str = str.replace(/\s+/g, '');
+        if (!str) return false;
+
+        var depth = 0, parts = [], cur = 0;
+        for (var i = 0; i < str.length; i++) {
+          if (str[i] === '(') depth++;
+          else if (str[i] === ')') depth--;
+          else if (str[i] === '+' && depth === 0) {
+            parts.push(str.substring(cur, i));
+            cur = i + 1;
+          }
+        }
+        if (parts.length > 0) {
+          parts.push(str.substring(cur));
+          return parts.some(p => evalBool(p));
+        }
+
+        if (str[0] === '(' && str[str.length - 1] === ')') {
+          var d = 0, isEnclosed = true;
+          for (var i = 0; i < str.length - 1; i++) {
+            if (str[i] === '(') d++;
+            else if (str[i] === ')') d--;
+            if (d === 0) { isEnclosed = false; break; }
+          }
+          if (isEnclosed) return evalBool(str.substring(1, str.length - 1));
+        }
+
+        if (str.endsWith("'") || str.endsWith("\u2019")) {
+          if (str.endsWith(")'")) {
+            var d = 0, matchIdx = -1;
+            for (var i = str.length - 2; i >= 0; i--) {
+              if (str[i] === ')') d++;
+              else if (str[i] === '(') d--;
+              if (d === 0) { matchIdx = i; break; }
+            }
+            if (matchIdx === 0) return !evalBool(str.substring(1, str.length - 2));
+          }
+        }
+
+        if (str.startsWith('!') || str.startsWith('~')) {
+          return !evalBool(str.substring(1));
+        }
+
+        var terms = [];
+        var depth2 = 0, start = 0;
+        for (var i = 0; i < str.length; i++) {
+          if (str[i] === '(') depth2++;
+          else if (str[i] === ')') depth2--;
+          else if (str[i] === '*' || str[i] === '·' || str[i] === '•') {
+            if (depth2 === 0) {
+              terms.push(str.substring(start, i));
+              start = i + 1;
+            }
+          }
+        }
+        if (terms.length > 0) {
+          terms.push(str.substring(start));
+          return terms.every(t => evalBool(t));
+        }
+
+        var tokens = [];
+        var i = 0;
+        while (i < str.length) {
+          if (str[i] === '(') {
+            var d = 1, j = i + 1;
+            while (j < str.length && d > 0) {
+              if (str[j] === '(') d++;
+              else if (str[j] === ')') d--;
+              j++;
+            }
+            var sub = str.substring(i, j);
+            while (j < str.length && (str[j] === "'" || str[j] === "\u2019")) {
+              sub += "'";
+              j++;
+            }
+            tokens.push(sub);
+            i = j;
+          } else if (/[A-Za-z]/.test(str[i])) {
+            var name = str[i];
+            var j = i + 1;
+            while (j < str.length && /\d/.test(str[j])) { name += str[j]; j++; }
+            var isComp = false;
+            while (j < str.length && (str[j] === "'" || str[j] === "\u2019" || str[j] === "~" || str[j] === "!")) {
+              isComp = !isComp;
+              j++;
+            }
+            tokens.push({ varName: name.toUpperCase(), comp: isComp });
+            i = j;
+          } else if (str[i] === '0' || str[i] === '1') {
+            tokens.push(str[i] === '1');
+            i++;
+          } else {
+            i++;
+          }
+        }
+
+        if (tokens.length === 1) {
+          var tok = tokens[0];
+          if (typeof tok === 'boolean') return tok;
+          if (typeof tok === 'string') {
+            if (tok.endsWith("'")) return !evalBool(tok.slice(0, -1));
+            return evalBool(tok);
+          }
+          var vi = varNames.indexOf(tok.varName);
+          var val = vi !== -1 ? assignment[vi] : false;
+          return tok.comp ? !val : val;
+        }
+
+        if (tokens.length > 1) {
+          return tokens.every(tok => {
+            if (typeof tok === 'boolean') return tok;
+            if (typeof tok === 'string') return evalBool(tok);
+            var vi = varNames.indexOf(tok.varName);
+            var val = vi !== -1 ? assignment[vi] : false;
+            return tok.comp ? !val : val;
+          });
+        }
+
+        return false;
+      }
+
+      return evalBool(clean);
+    }
+
+    function parseVarNames(input) {
+      return input.split('/').map(v => v.trim().toUpperCase()).filter(v => v.length > 0);
+    }
+
+    function parseExpression(exprInput, varInput) {
+      const varNames = parseVarNames(varInput);
+      const nv = varNames.length;
+      if (nv < 2 || nv > 4) return { success: false, minterms: [], dontCares: [], error: 'يجب أن يكون عدد المتغيرات بين 2 و 4' };
+      if (!exprInput.trim()) return { success: false, minterms: [], dontCares: [], error: 'أدخل المعادلة المنطقية' };
+
+      // Normalize expression: remove all spaces, convert to uppercase
+      let expr = exprInput.trim();
+      const total = 1 << nv;
+
+      let mintermsList = [];
+      let dontCaresList = [];
+      let isNumericNotation = false;
+
+      const dcMatch = expr.match(/[dDX]\s*\(([\d\s,]+)\)/i);
+      if (dcMatch) {
+        const nums = dcMatch[1].split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n));
+        dontCaresList = nums.filter(n => n >= 0 && n < total);
+        expr = expr.replace(dcMatch[0], '').replace(/^\s*\+\s*|\s*\+\s*$/g, '').trim();
+        isNumericNotation = true;
+      }
+
+      const mintermMatch = expr.match(/^[mM\u03A3\u03A0]?\s*\(?([\d\s,]+)\)?$/);
+      if (mintermMatch || isNumericNotation) {
+        if (expr.startsWith('Π') || expr.startsWith('p') || expr.startsWith('P')) {
+          const inner = expr.replace(/^[^\(]*\(/, '').replace(/\)$/, '');
+          const maxNums = inner.split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n));
+          const maxSet = new Set(maxNums);
+          for (let m = 0; m < total; m++) {
+            if (!maxSet.has(m) && !dontCaresList.includes(m)) mintermsList.push(m);
+          }
+          return { success: true, minterms: mintermsList, dontCares: dontCaresList };
+        } else if (expr.length > 0) {
+          const cleanNums = expr.replace(/^[mM\u03A3]?\s*\(?/, '').replace(/\)?$/, '');
+          const nums = cleanNums.split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n));
+          const invalid = nums.filter(n => n < 0 || n >= total);
+          if (invalid.length > 0) return { success: false, minterms: [], dontCares: [], error: 'أرقام خارج النطاق: ' + invalid.join(', ') };
+          mintermsList = nums;
+          return { success: true, minterms: mintermsList, dontCares: dontCaresList };
+        } else if (isNumericNotation) {
+          return { success: true, minterms: mintermsList, dontCares: dontCaresList };
+        }
+      }
+
+      // Validate that only allowed variables (A, B, C, D) are present in algebraic expression
+      const lettersUsed = (expr.match(/[A-Za-z]/g) || []).map(l => l.toUpperCase());
+      const allowedSet = new Set(varNames);
+      const invalidLetters = [...new Set(lettersUsed.filter(l => !allowedSet.has(l)))];
+      if (invalidLetters.length > 0) {
+        return {
+          success: false,
+          minterms: [],
+          dontCares: [],
+          error: 'حروف غير معرفة: ' + invalidLetters.join(', ') + ' (المتغيرات المتاحة هي: ' + varNames.join(', ') + ')'
+        };
+      }
+
+      const minterms = [];
+      for (let m = 0; m < total; m++) {
+        const assignment = [];
+        for (let v = 0; v < nv; v++) assignment.push(((m >> (nv - 1 - v)) & 1) === 1);
+        try {
+          if (evaluateAST(expr, varNames, assignment)) {
+            minterms.push(m);
+          }
+        } catch (e) {
+          return { success: false, minterms: [], dontCares: [], error: 'صيغة المعادلة غير صحيحة' };
+        }
+      }
+
+      return { success: true, minterms, dontCares: dontCaresList };
+    }
+
+    function buildKMapFromParse(pr, nv) {
+      const { rows, cols } = getKMapSize(nv);
+      const km = Array.from({ length: rows * cols }, () => 0);
+      function mintermToCell(m) {
+        let row, col;
+        if (nv === 2) { row = GRAY1.indexOf((m >> 1) & 1); col = GRAY1.indexOf(m & 1); }
+        else if (nv === 3) { row = GRAY1.indexOf((m >> 2) & 1); col = GRAY2.indexOf(m & 3); }
+        else { row = GRAY2.indexOf((m >> 2) & 3); col = GRAY2.indexOf(m & 3); }
+        if (row !== -1 && col !== -1) return row * cols + col;
+        return -1;
+      }
+      for (const m of pr.minterms) { const c = mintermToCell(m); if (c !== -1) km[c] = 1; }
+      for (const m of pr.dontCares) { const c = mintermToCell(m); if (c !== -1) km[c] = 'X'; }
+      return km;
+    }
+
+    function getMintermTerm(m, nv, varNames) {
+      const terms = [];
+      for (let v = 0; v < nv; v++) {
+        const bit = (m >> (nv - 1 - v)) & 1;
+        terms.push(bit === 1 ? varNames[v] : varNames[v] + "'");
+      }
+      return terms.join('');
+    }
+
+    function updateExprFromKMap() {
+      const { rows, cols } = getKMapSize(numVars);
+      const varNames = parseVarNames(document.getElementById('varInput').value);
+      const onesMinterms = [];
+
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const idx = r * cols + c;
+          const val = kmap[idx];
+          const m = getMinterm(r, c, numVars);
+          if (val === 1) onesMinterms.push(m);
+        }
+      }
+
+      onesMinterms.sort((a, b) => a - b);
+
+      if (onesMinterms.length === 0) {
+        document.getElementById('exprInput').value = '';
+      } else {
+        const terms = onesMinterms.map(m => getMintermTerm(m, numVars, varNames));
+        document.getElementById('exprInput').value = terms.join(' + ');
+      }
+      document.getElementById('errorBox').style.display = 'none';
+      updateOkBtnState();
+    }
+
+    // ===== UI & RENDERING =====
+    function setNumVars(n) {
+      numVars = n;
+      kmap = initKMap(n);
+      result = null;
+      document.querySelectorAll('#v2,#v3,#v4').forEach(b => b.classList.remove('active'));
+      document.getElementById('v' + n).classList.add('active');
+      if (n === 2) document.getElementById('varInput').value = 'A/B';
+      else if (n === 3) document.getElementById('varInput').value = 'A/B/C';
+      else document.getElementById('varInput').value = 'A/B/C/D';
+      document.getElementById('exprInput').value = '';
+      document.getElementById('errorBox').style.display = 'none';
+      renderKMap();
+      doSimplify();
+      updateOkBtnState();
+    }
+
+    function cycleCell(idx) {
+      const cur = kmap[idx];
+      kmap[idx] = cur === 0 ? 1 : cur === 1 ? 'X' : 0;
+      updateExprFromKMap();
+      renderKMap();
+      doSimplify();
+    }
+
+    function resetMap() {
+      kmap = initKMap(numVars);
+      document.getElementById('exprInput').value = '';
+      document.getElementById('errorBox').style.display = 'none';
+      renderKMap();
+      doSimplify();
+      updateOkBtnState();
+    }
+
+    // Generate random unsimplified boolean expression with mixed term lengths (2, 3, and 4 literals)
+    function generateRandomMixedSOP(nv) {
+      const vars = ['a', 'b', 'c', 'd'].slice(0, nv);
+      const numTerms = Math.floor(Math.random() * 3) + 3; // 3 to 5 terms
+      const terms = new Set();
+
+      for (let i = 0; i < 20 && terms.size < numTerms; i++) {
+        let litCount;
+        if (nv === 4) {
+          const r = Math.random();
+          litCount = r < 0.45 ? 2 : (r < 0.85 ? 3 : 4);
+        } else if (nv === 3) {
+          litCount = Math.random() < 0.6 ? 2 : 3;
+        } else {
+          litCount = Math.random() < 0.4 ? 1 : 2;
+        }
+
+        const shuffled = vars.slice().sort(() => Math.random() - 0.5);
+        const chosen = shuffled.slice(0, litCount).sort();
+
+        let termStr = '';
+        chosen.forEach(v => {
+          const comp = Math.random() < 0.5 ? "'" : '';
+          termStr += v + comp;
+        });
+
+        if (termStr.length > 0) terms.add(termStr);
+      }
+
+      const termArr = Array.from(terms);
+      if (termArr.length < 2) return null;
+      return termArr.join(' + ');
+    }
+
+    function fillRandom() {
+      const pools = {
+        2: [
+          "a'b + a",
+          "ab' + b",
+          "a'b' + ab",
+          "a'b + ab'",
+          "a' + ab",
+          "b' + a'b",
+          "ab + a'b'",
+          "a'b + b'",
+          "a + b'"
+        ],
+        3: [
+          "a'b + ac' + a'b'c",
+          "ab' + b'c + a'bc'",
+          "ac + a'b' + bc'",
+          "a'c' + ab + b'c",
+          "b'c' + a'b + abc'",
+          "a'c + ab' + bc",
+          "ab + a'c' + b'c",
+          "a'b + b'c + ac'",
+          "bc + a'b' + ac'",
+          "a'b' + b'c' + abc",
+          "ac' + a'b + b'c'",
+          "ab + a'bc' + b'c",
+          "a'bc + ac' + b'",
+          "ab' + a'c + bc'",
+          "ac + b'c' + a'b"
+        ],
+        4: [
+          "a'b + ac'd + bcd' + a'b'c",
+          "ab + c'd + a'bcd' + ac",
+          "a'bd + b'c' + abc'd + cd'",
+          "a'c + b'd' + abc + a'b'cd",
+          "ad + a'b'c + bcd' + a'c'd",
+          "b'd + a'bc' + acd' + b'c",
+          "ab' + a'c'd + bc + a'b'cd'",
+          "a'd' + bcd + a'b'c + ac'd",
+          "ac' + a'bd' + bc'd + ab'c",
+          "b'c'd + ab + a'cd' + a'b'd",
+          "a'b' + bc'd + abd' + cd",
+          "ac + a'b'd + bc' + a'cd'",
+          "ad' + a'bc + b'c'd + ab",
+          "b'd' + ac'd + a'bc + c'd",
+          "a'bcd + b'c + ad' + a'b'd'",
+          "ab'c + c'd + a'bd' + bc",
+          "a'b' + a'cd + bc'd' + ab'd",
+          "ab'd' + a'c + bcd + ac'd",
+          "bc' + a'b'd + acd' + a'cd",
+          "a'bd' + ac' + b'c'd + ab'c",
+          "a'c' + bd + a'b'cd + acd'",
+          "b'c + a'd' + abc' + a'bc",
+          "ad + b'c'd + a'bd' + bc'",
+          "ab + a'c'd + bc'd + cd'"
+        ]
+      };
+
+      let randExpr = null;
+      if (Math.random() < 0.55) {
+        const list = pools[numVars] || pools[4];
+        randExpr = list[Math.floor(Math.random() * list.length)];
+      } else {
+        for (let attempt = 0; attempt < 12; attempt++) {
+          const cand = generateRandomMixedSOP(numVars);
+          if (cand) {
+            const varNames = ['A', 'B', 'C', 'D'].slice(0, numVars);
+            const pr = parseExpression(cand, varNames.join('/'));
+            if (pr.success) {
+              const km = buildKMapFromParse(pr, numVars);
+              const simp = simplifyKMap(km, numVars);
+              if (simp.expression !== '0' && simp.expression !== '1') {
+                randExpr = cand;
+                break;
+              }
+            }
+          }
+        }
+        if (!randExpr) {
+          const list = pools[numVars] || pools[4];
+          randExpr = list[Math.floor(Math.random() * list.length)];
+        }
+      }
+
+      const inputEl = document.getElementById('exprInput');
+      inputEl.value = randExpr;
+      document.getElementById('errorBox').style.display = 'none';
+
+      updateOkBtnState();
+      inputEl.focus();
+    }
+
+    function updateOkBtnState() {
+      const expr = document.getElementById('exprInput').value.trim();
+      const vars = document.getElementById('varInput').value.trim();
+      const btn = document.getElementById('exprOkBtn');
+      btn.disabled = !(expr.length > 0 && vars.length > 0);
+    }
+
+    function setAll(v) {
+      const { rows, cols } = getKMapSize(numVars);
+      kmap = Array.from({ length: rows * cols }, () => v);
+      renderKMap();
+      doSimplify();
+    }
+
+    function doSimplify() {
+      result = simplifyKMap(kmap, numVars);
+      renderKMap();
+      showResult();
+      if (showTT) renderTruthTable();
+      if (showCirc) drawCirc(circuitMode);
+    }
+
+    function handleOK() {
+      const expr = document.getElementById('exprInput').value;
+      const vars = document.getElementById('varInput').value;
+      if (!expr.trim() || !vars.trim()) return;
+      const pr = parseExpression(expr, vars);
+      if (!pr.success) {
+        document.getElementById('errorBox').style.display = 'flex';
+        document.getElementById('errorBox').textContent = pr.error;
+        return;
+      }
+      document.getElementById('errorBox').style.display = 'none';
+      const varNames = parseVarNames(vars);
+      numVars = varNames.length;
+      kmap = buildKMapFromParse(pr, numVars);
+      document.querySelectorAll('#v2,#v3,#v4').forEach(b => b.classList.remove('active'));
+      document.getElementById('v' + numVars).classList.add('active');
+      doSimplify();
+    }
+
+    function setResultMode(mode) {
+      currentResultMode = mode;
+      document.querySelectorAll('#rmSOP, #rmPOS, #rmFactored').forEach(b => b.classList.remove('active'));
+      if (mode === 'SOP') document.getElementById('rmSOP').classList.add('active');
+      if (mode === 'POS') document.getElementById('rmPOS').classList.add('active');
+      if (mode === 'Factored') document.getElementById('rmFactored').classList.add('active');
+      showResult();
+
+      if (mode === 'Factored') circuitMode = 'Factored';
+      else if (mode === 'POS') circuitMode = 'NOR';
+      else circuitMode = 'ANDOR';
+
+      if (showCirc) {
+        drawCirc(circuitMode);
+      }
+    }
+
+    function showResult() {
+      if (!result) return;
+      const resEl = document.getElementById('resultExpr');
+      const extraEl = document.getElementById('resultExtra');
+      resEl.style.color = '#059669';
+
+      let displayStr = result.expression;
+      if (currentResultMode === 'POS') displayStr = result.posExpression;
+      else if (currentResultMode === 'Factored') displayStr = result.factoredExpression;
+
+      resEl.textContent = 'F = ' + displayStr;
+
+      const hasFactoredDiff = result.factoredExpression && result.factoredExpression !== result.expression;
+      if (result.xorExpression || hasFactoredDiff) {
+        extraEl.style.display = 'block';
+        if (currentResultMode === 'Factored') {
+          extraEl.innerHTML = `<span style="display:inline-flex; align-items:center; gap:6px; color:#0284c7; font-weight:700; font-size:13px;">⚡ المعادلة المنطقية المختصرة باستخدام العامل المشترك وبوابات XOR / XNOR</span>`;
+        } else {
+          extraEl.innerHTML = `<span style="cursor:pointer; display:inline-flex; align-items:center; gap:6px; background:#eff6ff; border:1px solid #bfdbfe; color:#1d4ed8; padding:4px 12px; border-radius:6px; font-weight:700; font-size:13px; transition:all 0.15s;" onclick="setResultMode('Factored')" title="اضغط هنا لعرض المعادلة المنطقية المختصرة">💡 تبسيط منطقي مختصر (XOR): <strong style="direction:ltr; font-family:monospace; color:#059669;">F = ${result.factoredExpression}</strong> <span style="text-decoration:underline; font-size:11.5px;">(اضغط هنا للعرض)</span></span>`;
+        }
+      } else {
+        extraEl.style.display = 'none';
+      }
+
+      const gt = document.getElementById('groupTags');
+      gt.innerHTML = '';
+      const colors = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4', '#ec4899', '#f97316'];
+      result.groupTerms.forEach((t, i) => {
+        const span = document.createElement('span');
+        span.className = 'group-tag';
+        span.style.color = colors[i % colors.length];
+        span.style.borderColor = colors[i % colors.length] + '66';
+        span.style.background = colors[i % colors.length] + '14';
+        span.textContent = t;
+        span.onmouseenter = () => highlightGroupCells(result.groups[i], true);
+        span.onmouseleave = () => highlightGroupCells(result.groups[i], false);
+        gt.appendChild(span);
+      });
+
+      const stepsSec = document.getElementById('stepsSection');
+      const stepsList = document.getElementById('stepsList');
+      if (result.steps && result.steps.length > 0) {
+        stepsSec.style.display = 'block';
+        stepsList.innerHTML = result.steps.map(s => `<div class="step-item">${s}</div>`).join('');
+      } else {
+        stepsSec.style.display = 'none';
+      }
+    }
+
+    function highlightGroupCells(cells, isHovered) {
+      cells.forEach(idx => {
+        const el = document.getElementById('kcell_' + idx);
+        if (el) el.classList.toggle('cell-hovered', isHovered);
+      });
+    }
+
+    function renderKMap() {
+      const { rows, cols } = getKMapSize(numVars);
+      const { rowLabels, colLabels } = getKMapLabels(numVars);
+      const allVars = ['A', 'B', 'C', 'D'].slice(0, numVars);
+      const rowVarNames = numVars <= 3 ? [allVars[0]] : [allVars[0], allVars[1]];
+      const colVarNames = numVars === 2 ? [allVars[1]] : numVars === 3 ? [allVars[1], allVars[2]] : [allVars[2], allVars[3]];
+      const groups = result ? result.groups : [];
+      const table = document.getElementById('kmapTable');
+
+      let html = '<thead><tr>';
+      html += '<th class="corner-cell"><div class="corner-line"></div><span class="corner-row-vars">' + rowVarNames.join('') + '</span><span class="corner-col-vars">' + colVarNames.join('') + '</span></th>';
+      colLabels.forEach(l => { html += '<th>' + l + '</th>'; });
+      html += '</tr></thead><tbody>';
+
+      for (let r = 0; r < rows; r++) {
+        html += '<tr>';
+        html += '<td class="row-label">' + rowLabels[r] + '</td>';
+        for (let c = 0; c < cols; c++) {
+          const idx = r * cols + c;
+          const val = kmap[idx];
+          const mt = getMinterm(r, c, numVars);
+          let gc = -1;
+          for (let gi = 0; gi < groups.length; gi++) {
+            if (groups[gi].includes(idx)) { gc = gi; break; }
+          }
+          const cls = gc >= 0 ? ' g' + (gc + 1) : '';
+          html += `<td class="cell${cls}" id="kcell_${idx}" data-v="${val === 'X' ? 'X' : val}" onclick="cycleCell(${idx})">`;
+          html += `<span class="minterm">${mt}</span>`;
+          html += `<span class="value">${val === 'X' ? 'X' : val}</span>`;
+          html += `</td>`;
+        }
+        html += '</tr>';
+      }
+      html += '</tbody>';
+      table.innerHTML = html;
+    }
+
+    function renderTruthTable() {
+      const varNames = ['A', 'B', 'C', 'D'].slice(0, numVars);
+      const total = 1 << numVars;
+      const { rows, cols } = getKMapSize(numVars);
+      const tt = document.getElementById('truthTable');
+
+      // Update banner text
+      document.getElementById('modalVarsText').textContent = varNames.join(', ');
+      const resExpr = (result && result.expression) ? 'F = ' + result.expression : 'F = 0';
+      document.getElementById('modalExprText').textContent = resExpr;
+
+      let html = '<thead><tr>';
+      varNames.forEach(v => { html += '<th>' + v + '</th>'; });
+      html += '<th>F</th></tr></thead><tbody>';
+
+      for (let m = 0; m < total; m++) {
+        const bin = m.toString(2).padStart(numVars, '0');
+        let row, col;
+        if (numVars === 2) { row = GRAY1.indexOf((m >> 1) & 1); col = GRAY1.indexOf(m & 1); }
+        else if (numVars === 3) { row = GRAY1.indexOf((m >> 2) & 1); col = GRAY2.indexOf(m & 3); }
+        else { row = GRAY2.indexOf((m >> 2) & 3); col = GRAY2.indexOf(m & 3); }
+        const cellIdx = row !== -1 && col !== -1 ? row * cols + col : -1;
+        const val = cellIdx !== -1 ? kmap[cellIdx] : 0;
+        const cls = val === 1 ? ' class="tt-1"' : val === 'X' ? ' class="tt-x"' : '';
+        html += `<tr${cls}>`;
+        for (let j = 0; j < numVars; j++) html += `<td>${bin[j]}</td>`;
+        html += `<td style="font-weight:800;font-size:14px;">${val === 'X' ? 'X' : val}</td></tr>`;
+      }
+      html += '</tbody>';
+      tt.innerHTML = html;
+    }
+
+    let topZIndex = 10000;
+
+    function bringToFront(cardId) {
+      const card = document.getElementById(cardId);
+      if (card) {
+        card.style.zIndex = ++topZIndex;
+      }
+    }
+
+    function makeDraggable(headerId, cardId) {
+      const header = document.getElementById(headerId);
+      const card = document.getElementById(cardId);
+      if (!header || !card) return;
+
+      card.addEventListener('mousedown', function () { bringToFront(cardId); });
+      card.addEventListener('touchstart', function () { bringToFront(cardId); }, { passive: true });
+
+      let isDragging = false;
+      let offsetX = 0, offsetY = 0;
+
+      header.addEventListener('mousedown', function (e) {
+        if (e.target.closest('.modal-close-btn') || e.target.closest('button')) return;
+        bringToFront(cardId);
+        isDragging = true;
+        const rect = card.getBoundingClientRect();
+        offsetX = e.clientX - rect.left;
+        offsetY = e.clientY - rect.top;
+        card.style.transform = 'none';
+        card.style.left = rect.left + 'px';
+        card.style.top = rect.top + 'px';
+        document.body.style.userSelect = 'none';
+      });
+
+      document.addEventListener('mousemove', function (e) {
+        if (!isDragging) return;
+        let newX = e.clientX - offsetX;
+        let newY = e.clientY - offsetY;
+        const maxX = window.innerWidth - card.offsetWidth;
+        const maxY = window.innerHeight - card.offsetHeight;
+        newX = Math.max(0, Math.min(newX, Math.max(0, maxX)));
+        newY = Math.max(0, Math.min(newY, Math.max(0, maxY)));
+        card.style.left = newX + 'px';
+        card.style.top = newY + 'px';
+      });
+
+      document.addEventListener('mouseup', function () {
+        if (isDragging) {
+          isDragging = false;
+          document.body.style.userSelect = '';
+        }
+      });
+
+      // Touch Support
+      header.addEventListener('touchstart', function (e) {
+        if (e.target.closest('.modal-close-btn') || e.target.closest('button')) return;
+        bringToFront(cardId);
+        const touch = e.touches[0];
+        isDragging = true;
+        const rect = card.getBoundingClientRect();
+        offsetX = touch.clientX - rect.left;
+        offsetY = touch.clientY - rect.top;
+        card.style.transform = 'none';
+        card.style.left = rect.left + 'px';
+        card.style.top = rect.top + 'px';
+      }, { passive: true });
+
+      document.addEventListener('touchmove', function (e) {
+        if (!isDragging) return;
+        const touch = e.touches[0];
+        let newX = touch.clientX - offsetX;
+        let newY = touch.clientY - offsetY;
+        const maxX = window.innerWidth - card.offsetWidth;
+        const maxY = window.innerHeight - card.offsetHeight;
+        newX = Math.max(0, Math.min(newX, Math.max(0, maxX)));
+        newY = Math.max(0, Math.min(newY, Math.max(0, maxY)));
+        card.style.left = newX + 'px';
+        card.style.top = newY + 'px';
+      }, { passive: true });
+
+      document.addEventListener('touchend', function () {
+        isDragging = false;
+      });
+    }
+
+    let isModalMaximized = false;
+
+    function initDraggableModals() {
+      makeDraggable('dualModalHeader', 'dualModalCard');
+    }
+
+    function resetDualModalPos() {
+      const card = document.getElementById('dualModalCard');
+      if (card && !isModalMaximized) {
+        card.style.left = '50%';
+        card.style.top = '50%';
+        card.style.transform = 'translate(-50%, -50%)';
+      }
+    }
+
+    function updateModalView() {
+      const modal = document.getElementById('dualModal');
+      const card = document.getElementById('dualModalCard');
+      const leftCol = document.getElementById('modalLeftCol');
+      const rightCol = document.getElementById('modalRightCol');
+      const titleEl = document.getElementById('modalTitleText');
+      const btnAll = document.getElementById('tabBtnAll');
+      const btnTT = document.getElementById('tabBtnTT');
+      const btnCirc = document.getElementById('tabBtnCirc');
+      const ttBtn = document.getElementById('ttBtn');
+      const circBtn = document.getElementById('circuitBtn');
+
+      const isOpen = showTT || showCirc;
+      if (!isOpen) {
+        modal.classList.remove('active');
+        ttBtn.classList.remove('active');
+        circBtn.classList.remove('active');
+        return;
+      }
+
+      modal.classList.add('active');
+      ttBtn.classList.toggle('active', showTT);
+      circBtn.classList.toggle('active', showCirc);
+
+      [btnAll, btnTT, btnCirc].forEach(b => { if (b) b.classList.remove('active'); });
+
+      if (showTT && showCirc) {
+        // Both: Table on Left, Circuit on Right
+        if (!isModalMaximized) card.style.maxWidth = '1180px';
+        leftCol.style.display = 'flex';
+        leftCol.style.flex = '0 0 340px';
+        rightCol.style.display = 'flex';
+        rightCol.style.flex = '1';
+        titleEl.innerHTML = '📊 جدول الحقيقة &amp; ⚡ التمثيل المنطقي';
+        if (btnAll) btnAll.classList.add('active');
+        renderTruthTable();
+        drawCirc(circuitMode);
+      } else if (showTT) {
+        // Truth Table Only
+        if (!isModalMaximized) card.style.maxWidth = '460px';
+        leftCol.style.display = 'flex';
+        leftCol.style.flex = '1';
+        leftCol.style.width = '100%';
+        rightCol.style.display = 'none';
+        titleEl.innerHTML = '📊 جدول الحقيقة (Truth Table)';
+        if (btnTT) btnTT.classList.add('active');
+        renderTruthTable();
+      } else if (showCirc) {
+        // Circuit Only
+        if (!isModalMaximized) card.style.maxWidth = '820px';
+        leftCol.style.display = 'none';
+        rightCol.style.display = 'flex';
+        rightCol.style.flex = '1';
+        rightCol.style.width = '100%';
+        titleEl.innerHTML = '⚡ التمثيل المنطقي بالبوابات (Logic Diagram)';
+        if (btnCirc) btnCirc.classList.add('active');
+        drawCirc(circuitMode);
+      }
+
+      bringToFront('dualModalCard');
+    }
+
+    function toggleTruthTable() {
+      if (showTT && !showCirc) {
+        showTT = false;
+      } else if (showTT && showCirc) {
+        showTT = false;
+      } else {
+        showTT = true;
+        if (!showCirc) resetDualModalPos();
+      }
+      updateModalView();
+    }
+
+    function toggleCircuit() {
+      if (showCirc && !showTT) {
+        showCirc = false;
+      } else if (showCirc && showTT) {
+        showCirc = false;
+      } else {
+        showCirc = true;
+        if (!showTT) resetDualModalPos();
+      }
+      updateModalView();
+    }
+
+    function setModalMode(mode) {
+      if (mode === 'all') {
+        showTT = true;
+        showCirc = true;
+      } else if (mode === 'tt') {
+        showTT = true;
+        showCirc = false;
+      } else if (mode === 'circ') {
+        showTT = false;
+        showCirc = true;
+      }
+      updateModalView();
+    }
+
+    function closeDualModal() {
+      showTT = false;
+      showCirc = false;
+      updateModalView();
+    }
+
+    function toggleMaximizeModal() {
+      const card = document.getElementById('dualModalCard');
+      const btn = document.getElementById('modalMaxBtn');
+      if (!card) return;
+      isModalMaximized = !isModalMaximized;
+      card.classList.toggle('maximized', isModalMaximized);
+      if (btn) btn.innerHTML = isModalMaximized ? '🗗' : '⛶';
+      if (!isModalMaximized) {
+        resetDualModalPos();
+      }
+    }
+
+    // Close on Escape key
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && (showTT || showCirc)) {
+        closeDualModal();
+      }
+    });
+
+
+
+    // ===== CIRCUIT DIAGRAM DRAWING =====
+    function expandToSOP(expr) {
+      var s = expr.replace(/\s/g, '');
+      var changed = true;
+      while (changed) {
+        changed = false;
+        var regex = /([A-Za-z]\d*)(['\u2019!~]*)(\(([A-Za-z\d['\u2019!~+\u2026]+)\))/;
+        var m;
+        while ((m = regex.exec(s)) !== null) {
+          var factor = m[1] + m[2];
+          var inner = m[4];
+          var parts = [], depth = 0, start = 0;
+          for (var i = 0; i < inner.length; i++) {
+            if (inner[i] === '(') depth++;
+            if (inner[i] === ')') depth--;
+            if (inner[i] === '+' && depth === 0) {
+              parts.push(inner.substring(start, i));
+              start = i + 1;
+            }
+          }
+          parts.push(inner.substring(start));
+          var expanded = parts.map(p => factor + p.replace(/^\(/, '').replace(/\)$/, '')).join('+');
+          s = s.replace(m[0], expanded);
+          changed = true;
+          break;
+        }
+      }
+      return s;
+    }
+
+    function parseSOP(expr) {
+      var sop = expandToSOP(expr);
+      var terms = sop.split('+');
+      var res = [];
+      for (var i = 0; i < terms.length; i++) {
+        var t = terms[i].trim();
+        if (!t || t === '1') continue;
+        var lits = [];
+        var re = /([A-Za-z])(\d*)(['\u2019~!]*)/g, m;
+        while ((m = re.exec(t)) !== null) {
+          lits.push({ v: (m[1] + m[2]).toUpperCase(), c: m[3].length > 0 });
+        }
+        if (lits.length > 0) res.push({ lits: lits });
+      }
+      return res;
+    }
+
+    function getVars(productTerms) {
+      var vset = {};
+      for (var i = 0; i < productTerms.length; i++) {
+        for (var j = 0; j < productTerms[i].lits.length; j++) {
+          vset[productTerms[i].lits[j].v] = true;
+        }
+      }
+      return Object.keys(vset).sort();
+    }
+
+    function drawGate2(ctx, type, x, y, w, h) {
+      var cy = y + h / 2;
+      var GF = '#ffffff', GS = '#1e293b';
+      var BUB = 4.5, STUB = 8;
+      var in1y = y + h * 0.28, in2y = y + h * 0.72;
+      ctx.strokeStyle = GS; ctx.lineWidth = 2; ctx.fillStyle = GF;
+
+      if (type === 'AND' || type === 'NAND') {
+        ctx.beginPath(); ctx.moveTo(x - STUB, in1y); ctx.lineTo(x, in1y); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x - STUB, in2y); ctx.lineTo(x, in2y); ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + w * 0.52, y);
+        ctx.bezierCurveTo(x + w * 1.12, y, x + w * 1.12, y + h, x + w * 0.52, y + h);
+        ctx.lineTo(x, y + h);
+        ctx.closePath(); ctx.fill(); ctx.stroke();
+      } else if (type === 'OR' || type === 'NOR') {
+        var orInX = x + 6;
+        ctx.beginPath(); ctx.moveTo(orInX - STUB, in1y); ctx.lineTo(orInX + 2, in1y); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(orInX - STUB, in2y); ctx.lineTo(orInX + 2, in2y); ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x + 6, y);
+        ctx.bezierCurveTo(x + w * 0.5, y, x + w * 0.8, y + h * 0.3, x + w, cy);
+        ctx.bezierCurveTo(x + w * 0.8, y + h * 0.7, x + w * 0.5, y + h, x + 6, y + h);
+        ctx.bezierCurveTo(x + w * 0.2, y + h * 0.65, x + w * 0.2, y + h * 0.35, x + 6, y);
+        ctx.closePath(); ctx.fill(); ctx.stroke();
+      } else if (type === 'XOR' || type === 'XNOR' || type === 'NXOR') {
+        var xorInX = x + 8;
+        ctx.beginPath(); ctx.moveTo(xorInX - STUB, in1y); ctx.lineTo(x + 1, in1y); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(xorInX - STUB, in2y); ctx.lineTo(x + 1, in2y); ctx.stroke();
+        // Extra input arc for XOR
+        ctx.beginPath();
+        ctx.moveTo(x + 1, y);
+        ctx.bezierCurveTo(x + w * 0.15, y + h * 0.35, x + w * 0.15, y + h * 0.65, x + 1, y + h);
+        ctx.stroke();
+        // Main body
+        ctx.beginPath();
+        ctx.moveTo(x + 6, y);
+        ctx.bezierCurveTo(x + w * 0.5, y, x + w * 0.8, y + h * 0.3, x + w, cy);
+        ctx.bezierCurveTo(x + w * 0.8, y + h * 0.7, x + w * 0.5, y + h, x + 6, y + h);
+        ctx.bezierCurveTo(x + w * 0.2, y + h * 0.65, x + w * 0.2, y + h * 0.35, x + 6, y);
+        ctx.closePath(); ctx.fill(); ctx.stroke();
+      }
+
+      // Mandatory 2mm (~8px) stub drawn after every inversion bubble before the rest of the circuit
+      var POST_BUB = 8;
+
+      // NAND / NOR: small bubble (radius 4.5) + 2mm stub
+      if (type === 'NAND' || type === 'NOR') {
+        ctx.beginPath();
+        ctx.arc(x + w + BUB, cy, BUB, 0, Math.PI * 2);
+        ctx.fill(); ctx.stroke();
+        ctx.strokeStyle = GS; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(x + w + BUB * 2, cy); ctx.lineTo(x + w + BUB * 2 + POST_BUB, cy); ctx.stroke();
+        var inX = (type === 'NAND') ? x - STUB : x + 6 - STUB;
+        return { x: x + w + BUB * 2 + POST_BUB, y: cy, in1y: in1y, in2y: in2y, inX: inX };
+      }
+
+      // XNOR / NXOR: larger prominent bubble (radius 7) + 2mm stub
+      if (type === 'XNOR' || type === 'NXOR') {
+        var XBUB = 7;
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        ctx.arc(x + w + XBUB, cy, XBUB, 0, Math.PI * 2);
+        ctx.fill(); ctx.stroke();
+        ctx.strokeStyle = GS; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(x + w + XBUB * 2, cy); ctx.lineTo(x + w + XBUB * 2 + POST_BUB, cy); ctx.stroke();
+        return { x: x + w + XBUB * 2 + POST_BUB, y: cy, in1y: in1y, in2y: in2y, inX: x + 8 - STUB };
+      }
+
+      var inX = (type === 'AND') ? x - STUB : (type === 'XOR') ? x + 8 - STUB : x + 6 - STUB;
+      return { x: x + w, y: cy, in1y: in1y, in2y: in2y, inX: inX };
+    }
+
+    function wireH(ctx, x1, x2, y, color, width) {
+      ctx.strokeStyle = color || '#1e293b'; ctx.lineWidth = width || 1.5;
+      ctx.beginPath(); ctx.moveTo(x1, y); ctx.lineTo(x2, y); ctx.stroke();
+    }
+    function wireV(ctx, x, y1, y2, color, width) {
+      ctx.strokeStyle = color || '#1e293b'; ctx.lineWidth = width || 1.5;
+      ctx.beginPath(); ctx.moveTo(x, y1); ctx.lineTo(x, y2); ctx.stroke();
+    }
+    function wireToPin(ctx, srcX, srcY, pinX, pinY, color, width) {
+      var c = color || '#1e293b'; var w = width || 1.5;
+      if (Math.abs(srcY - pinY) <= 0.5) {
+        wireH(ctx, srcX, pinX, srcY, c, w);
+        return;
+      }
+      // Guarantee a clean horizontal stub out of the gate / bubble (at least 12px / ~3mm) before bending vertically
+      var stub = 12;
+      var midX = srcX + stub;
+      if (pinX > srcX + 2 * stub) {
+        midX = srcX + Math.max(stub, (pinX - srcX) * 0.45);
+      } else if (pinX > srcX) {
+        midX = (srcX + pinX) / 2;
+      }
+      wireH(ctx, srcX, midX, srcY, c, w);
+      wireV(ctx, midX, srcY, pinY, c, w);
+      wireH(ctx, midX, pinX, pinY, c, w);
+    }
+    function busTap(ctx, busX, pinY, pinX, color, width) {
+      junction(ctx, busX, pinY, color);
+      wireH(ctx, busX, pinX, pinY, color, width);
+    }
+    function busTapToInverter(ctx, busX, invOut, color, width) {
+      var c = color || '#1e293b'; var w = width || 1.8;
+      var cy = (invOut.in1y + invOut.in2y) / 2;
+      var forkX = invOut.inX - 10;
+      junction(ctx, busX, cy, c);
+      wireH(ctx, busX, forkX, cy, c, w);
+      junction(ctx, forkX, cy, c);
+      wireV(ctx, forkX, invOut.in1y, invOut.in2y, c, w);
+      wireH(ctx, forkX, invOut.inX, invOut.in1y, c, w);
+      wireH(ctx, forkX, invOut.inX, invOut.in2y, c, w);
+    }
+    function wireGateToInverter(ctx, srcX, srcY, invOut, color, width) {
+      var c = color || '#1e293b'; var w = width || 1.5;
+      var cy = (invOut.in1y + invOut.in2y) / 2;
+      var forkX = invOut.inX - 10;
+      if (Math.abs(srcY - cy) <= 0.5) {
+        wireH(ctx, srcX, forkX, srcY, c, w);
+      } else {
+        var stub = 12;
+        var midX = srcX + stub;
+        if (forkX > srcX + 2 * stub) {
+          midX = srcX + Math.max(stub, (forkX - srcX) * 0.45);
+        } else if (forkX > srcX) {
+          midX = (srcX + forkX) / 2;
+        }
+        wireH(ctx, srcX, midX, srcY, c, w);
+        wireV(ctx, midX, srcY, cy, c, w);
+        wireH(ctx, midX, forkX, cy, c, w);
+      }
+      junction(ctx, forkX, cy, c);
+      wireV(ctx, forkX, invOut.in1y, invOut.in2y, c, w);
+      wireH(ctx, forkX, invOut.inX, invOut.in1y, c, w);
+      wireH(ctx, forkX, invOut.inX, invOut.in2y, c, w);
+    }
+
+    function junction(ctx, x, y, color) {
+      ctx.fillStyle = color || '#1e293b';
+      ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2); ctx.fill();
+    }
+
+    // ===== GATE OUTPUT HOVER TOOLTIPS =====
+    var circuitGateOutputs = [];
+    var baseCircuitImageData = null;
+    var hoveredGate = null;
+
+    function registerGateOutput(x, y, type, expr) {
+      if (x === undefined || y === undefined || !expr) return;
+      circuitGateOutputs.push({ x: x, y: y, type: type, expr: expr });
+    }
+
+    function saveCircuitBaseState() {
+      var canvas = document.getElementById('circuitCanvas');
+      if (!canvas) return;
+      var ctx = canvas.getContext('2d');
+      try {
+        baseCircuitImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      } catch (err) {
+        baseCircuitImageData = null;
+      }
+      hoveredGate = null;
+    }
+
+    function drawGateHoverPin(ctx, g, dpr) {
+      ctx.save();
+      ctx.scale(dpr, dpr);
+
+      // Highlight output pin with cyan glowing circle & pulse ring
+      ctx.fillStyle = '#0ea5e9';
+      ctx.beginPath();
+      ctx.arc(g.x, g.y, 4.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.arc(g.x, g.y, 8, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
+    function setupCircuitHover() {
+      var canvas = document.getElementById('circuitCanvas');
+      var tooltip = document.getElementById('circuitGateTooltip');
+      if (!canvas) return;
+
+      canvas.addEventListener('mousemove', function (e) {
+        if (!circuitGateOutputs || circuitGateOutputs.length === 0 || !baseCircuitImageData) {
+          if (tooltip) tooltip.style.display = 'none';
+          canvas.style.cursor = 'default';
+          return;
+        }
+
+        var rect = canvas.getBoundingClientRect();
+        var dpr = window.devicePixelRatio || 1;
+        var scaleX = (canvas.width / dpr) / rect.width;
+        var scaleY = (canvas.height / dpr) / rect.height;
+        var mx = (e.clientX - rect.left) * scaleX;
+        var my = (e.clientY - rect.top) * scaleY;
+
+        var best = null;
+        var bestDist = 32; // capture radius in canvas pixels
+
+        for (var i = 0; i < circuitGateOutputs.length; i++) {
+          var g = circuitGateOutputs[i];
+          var dist = Math.hypot(mx - g.x, my - g.y);
+          if (dist < bestDist) {
+            bestDist = dist;
+            best = g;
+          }
+        }
+
+        var ctx = canvas.getContext('2d');
+        if (best) {
+          canvas.style.cursor = 'pointer';
+          if (hoveredGate !== best) {
+            hoveredGate = best;
+            ctx.putImageData(baseCircuitImageData, 0, 0);
+            drawGateHoverPin(ctx, best, dpr);
+          }
+
+          if (tooltip) {
+            var typeNames = {
+              'AND': 'بوابة ضرب (AND)',
+              'OR': 'بوابة جمع (OR)',
+              'NAND': 'بوابة نفي الضرب (NAND)',
+              'NOR': 'بوابة نفي الجمع (NOR)',
+              'XOR': 'بوابة فصل حصري (XOR)',
+              'XNOR': 'بوابة تكافؤ (XNOR)',
+              'NOT': 'بوابة نفي (NOT)',
+              'OUT': 'المخرج النهائي (Output)'
+            };
+            var title = typeNames[best.type] || ('مخرج بوابة ' + best.type);
+            tooltip.innerHTML = '<div class="tt-title">' + title + '</div><div class="tt-expr">' + best.expr + '</div>';
+            tooltip.style.display = 'block';
+
+            var wrap = canvas.parentElement;
+            var wrapRect = wrap.getBoundingClientRect();
+            var pinRatioX = rect.width / (canvas.width / dpr);
+            var pinRatioY = rect.height / (canvas.height / dpr);
+            var pinScreenX = rect.left + best.x * pinRatioX;
+            var pinScreenY = rect.top + best.y * pinRatioY;
+
+            var tipX = pinScreenX - wrapRect.left + wrap.scrollLeft;
+            var tipY = pinScreenY - wrapRect.top + wrap.scrollTop;
+            tooltip.style.left = tipX + 'px';
+            tooltip.style.top = (tipY - 8) + 'px';
+          }
+        } else {
+          if (hoveredGate !== null) {
+            hoveredGate = null;
+            ctx.putImageData(baseCircuitImageData, 0, 0);
+          }
+          if (tooltip) tooltip.style.display = 'none';
+          canvas.style.cursor = 'default';
+        }
+      });
+
+      canvas.addEventListener('mouseleave', function () {
+        if (hoveredGate !== null && baseCircuitImageData) {
+          var ctx = canvas.getContext('2d');
+          ctx.putImageData(baseCircuitImageData, 0, 0);
+          hoveredGate = null;
+        }
+        if (tooltip) tooltip.style.display = 'none';
+        canvas.style.cursor = 'default';
+      });
+    }
+
+    function showCircuitExpr(text, steps) {
+      var box = document.getElementById('circuitExprBox');
+      var textEl = document.getElementById('circuitExprText');
+      if (!text) { box.style.display = 'none'; return; }
+      box.style.display = 'block';
+      var html = '';
+      if (steps && steps.length > 1) {
+        var finalStep = steps[steps.length - 1];
+        var subSteps = steps.slice(0, -1).join(' &nbsp;➔&nbsp; ');
+        html += '<div style="font-size:11px;color:#64748b;margin-bottom:1px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="' + steps.join(' \n ') + '">قانون ديمورقان: ' + subSteps + '</div>';
+        html += '<div style="font-size:14px;color:#059669;font-weight:800;font-family:monospace;line-height:1.2;">' + finalStep + '</div>';
+      } else {
+        html = '<div style="font-size:14px;color:#059669;font-weight:800;font-family:monospace;line-height:1.2;">' + text + '</div>';
+      }
+      textEl.innerHTML = html;
+    }
+
+    function getDeMorganNAND() {
+      if (!result || !result.expression || result.expression === '0') return null;
+      var terms = parseSOP(result.expression);
+      if (terms.length === 0) return null;
+      var sopStr = terms.map(t => t.lits.map(l => l.v + (l.c ? "'" : '')).join('')).join(' + ');
+      var nandTerms = terms.map(t => '(' + t.lits.map(l => l.v + (l.c ? "'" : '')).join('') + ')' + "'");
+      var nandExpr = '( ' + nandTerms.join(' · ') + ' )' + "'";
+      var steps = [
+        'F = ' + sopStr,
+        'F = ( (' + sopStr + ')' + ')' + "'  [النفي المزدوج]",
+        '(' + sopStr + ')' + "' = " + nandTerms.join(' · ') + '  [ديمورقان]',
+        'F = ' + nandExpr
+      ];
+      return { deMorganExpr: nandExpr, steps: steps };
+    }
+
+    function getDeMorganNOR() {
+      var posTerms = getPOSTerms();
+      if (!posTerms || posTerms.length === 0) return null;
+      var posStr = posTerms.map(t => '(' + t.lits.map(l => l.v + (l.c ? "'" : '')).join(' + ') + ')').join('');
+      var norTerms = posTerms.map(t => '(' + t.lits.map(l => l.v + (l.c ? "'" : '')).join(' + ') + ')' + "'");
+      var norExpr = '( ' + norTerms.join(' + ') + ' )' + "'";
+      var steps = [
+        'F = ' + posStr + '  [POS]',
+        'F = ( (' + posStr + ')' + ')' + "'  [النفي المزدوج]",
+        '(' + posStr + ')' + "' = " + norTerms.join(' + ') + '  [ديمورقان]',
+        'F = ' + norExpr
+      ];
+      return { deMorganExpr: norExpr, steps: steps };
+    }
+
+    function drawCirc(mode) {
+      if (mode) circuitMode = mode;
+      document.querySelectorAll('#cmANDOR, #cmFactored, #cmNAND, #cmNOR').forEach(b => b.classList.remove('active'));
+      var el = document.getElementById('cm' + circuitMode);
+      if (el) el.classList.add('active');
+
+      if (circuitMode === 'NAND') return drawUniversalCircuit('NAND');
+      if (circuitMode === 'NOR') return drawUniversalCircuit('NOR');
+      if (circuitMode === 'Factored') return drawFactoredCircuit();
+
+      drawANDORTree();
+    }
+
+    function drawFactoredCircuit() {
+      circuitGateOutputs = [];
+      if (!result || !result.factoredExpression || result.factoredExpression === '0') {
+        renderEmptyCircuit('F = 0 (دالة تساوي صفراً دوماً)');
+        return;
+      }
+      if (result.factoredExpression === '1') {
+        renderEmptyCircuit('F = 1 (دالة تساوي واحداً دوماً)');
+        return;
+      }
+
+      const factExpr = result.factoredExpression;
+      const factSteps = (result.factoredResult && result.factoredResult.factoringSteps && result.factoredResult.factoringSteps.length > 0)
+        ? result.factoredResult.factoringSteps
+        : ['المعادلة المنطقية المختصرة: F = ' + factExpr];
+      showCircuitExpr(factExpr, factSteps);
+
+      // Split top-level terms separated by '+' outside parentheses
+      const terms = [];
+      let depth = 0, start = 0;
+      for (let i = 0; i < factExpr.length; i++) {
+        if (factExpr[i] === '(') depth++;
+        else if (factExpr[i] === ')') depth--;
+        else if (factExpr[i] === '+' && depth === 0) {
+          terms.push(factExpr.substring(start, i).trim());
+          start = i + 1;
+        }
+      }
+      terms.push(factExpr.substring(start).trim());
+
+      // Collect all variables
+      const varSet = new Set();
+      const needsComp = {};
+      const reLit = /([A-Za-z])(\d*)(['\u2019~!]*)/g;
+      let m;
+      while ((m = reLit.exec(factExpr)) !== null) {
+        if (m[1]) {
+          const v = (m[1] + m[2]).toUpperCase();
+          varSet.add(v);
+          if (m[3] && m[3].length > 0) needsComp[v] = true;
+          else if (needsComp[v] === undefined) needsComp[v] = false;
+        }
+      }
+      const allVars = Array.from(varSet).sort();
+      const nVars = allVars.length;
+
+      const VAR_COLORS = ['#2563eb', '#dc2626', '#059669', '#7c3aed', '#d97706', '#0891b2'];
+      const GATE_W = 44, GATE_H = 34, BUB = 4.5;
+      const LABEL_H = 30, NOT_W = 20, NOT_H = 16;
+      const TERM_GAP = 28, LAYER_GAP = 42, LC = '#1e293b';
+
+      // Construct bus layout
+      const varInfo = [];
+      let curBusX = 40;
+      for (let vi = 0; vi < nVars; vi++) {
+        const vn = allVars[vi];
+        const hc = !!needsComp[vn];
+        const colW = hc ? 80 : 52;
+        const vx = curBusX + 16;
+        const cx = hc ? vx + 8 + NOT_W + BUB * 2 + 14 : 0;
+        const color = VAR_COLORS[vi % VAR_COLORS.length];
+        varInfo.push({ name: vn, x: vx, hasComp: hc, compX: cx, color: color });
+        curBusX += colW;
+      }
+      const BUS_RIGHT = curBusX + 10;
+
+      function getBus(vn, comp) {
+        for (let i = 0; i < varInfo.length; i++) {
+          if (varInfo[i].name === vn) return { x: comp ? varInfo[i].compX : varInfo[i].x, color: varInfo[i].color };
+        }
+        return { x: 40, color: LC };
+      }
+
+      // Parse each term
+      const parsedTerms = terms.map(termStr => {
+        const parenMatch = /^(.*?)\((.*?)\)(.*?)$/.exec(termStr);
+        if (parenMatch) {
+          const prefixStr = parenMatch[1] + parenMatch[3];
+          const innerStr = parenMatch[2].trim();
+          const prefixLits = parseLiterals(prefixStr);
+          if (innerStr.includes('⊕')) {
+            const xorVars = innerStr.split('⊕').map(v => v.trim().toUpperCase());
+            return { prefixLits, inner: { type: 'XOR', vars: xorVars } };
+          } else if (innerStr.includes('⊙')) {
+            const xnorVars = innerStr.split('⊙').map(v => v.trim().toUpperCase());
+            return { prefixLits, inner: { type: 'XNOR', vars: xnorVars } };
+          } else if (innerStr.includes('+')) {
+            const orParts = innerStr.split('+').map(p => parseLiterals(p.trim()));
+            return { prefixLits, inner: { type: 'OR', parts: orParts } };
+          } else {
+            const inLits = parseLiterals(innerStr);
+            return { prefixLits: prefixLits.concat(inLits), inner: null };
+          }
+        } else if (termStr.includes('⊕')) {
+          const xorVars = termStr.split('⊕').map(v => v.trim().toUpperCase());
+          return { prefixLits: [], inner: { type: 'XOR', vars: xorVars } };
+        } else if (termStr.includes('⊙')) {
+          const xnorVars = termStr.split('⊙').map(v => v.trim().toUpperCase());
+          return { prefixLits: [], inner: { type: 'XNOR', vars: xnorVars } };
+        } else {
+          return { prefixLits: parseLiterals(termStr), inner: null };
+        }
+      });
+
+      // Calculate layout coordinates
+      let curY = LABEL_H + 20;
+      const termLayouts = parsedTerms.map(pt => {
+        const yStart = curY;
+        let termH = GATE_H + 20;
+        if (pt.inner && (pt.inner.type === 'XOR' || pt.inner.type === 'XNOR')) {
+          const nIn = pt.inner.vars.length;
+          termH = Math.max(termH, (nIn - 1) * (GATE_H + 16) + (pt.prefixLits.length > 0 ? GATE_H + 16 : 0));
+        } else if (pt.prefixLits.length > 1) {
+          termH = Math.max(termH, pt.prefixLits.length * (GATE_H + 8));
+        }
+        curY += termH + TERM_GAP;
+        return { pt, yStart, termH };
+      });
+
+      const totalH = Math.max(curY + 40, 200);
+      const totalW = BUS_RIGHT + 40 + 4 * (GATE_W + LAYER_GAP) + 80;
+
+      const canvas = document.getElementById('circuitCanvas');
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = totalW * dpr; canvas.height = totalH * dpr;
+      canvas.style.width = totalW + 'px'; canvas.style.height = totalH + 'px';
+      const ctx = canvas.getContext('2d');
+      ctx.scale(dpr, dpr);
+      ctx.clearRect(0, 0, totalW, totalH);
+
+      // Calculate the lowest bus tap across all terms to terminate lines 10mm (38px) below last use
+      let maxBusTapY_f = LABEL_H + 30;
+      for (let ti = 0; ti < termLayouts.length; ti++) {
+        const { pt, yStart, termH } = termLayouts[ti];
+        if (pt.inner && (pt.inner.type === 'XOR' || pt.inner.type === 'XNOR')) {
+          const nIn = pt.inner.vars.length;
+          for (let k = 0; k < nIn; k++) {
+            const iy = yStart + 8 + k * (GATE_H + 8);
+            if (iy > maxBusTapY_f) maxBusTapY_f = iy;
+          }
+          if (pt.prefixLits.length > 0) {
+            pt.prefixLits.forEach((lit, li) => {
+              const py = yStart + (li + 1) * 32;
+              if (py > maxBusTapY_f) maxBusTapY_f = py;
+            });
+          }
+        } else {
+          const lits = pt.prefixLits;
+          if (lits.length === 1) {
+            const py = yStart + GATE_H / 2;
+            if (py > maxBusTapY_f) maxBusTapY_f = py;
+          } else {
+            lits.forEach((lit, li) => {
+              const iy = yStart + 8 + li * 28;
+              if (iy > maxBusTapY_f) maxBusTapY_f = iy;
+            });
+          }
+        }
+      }
+      const busEndY = maxBusTapY_f + 38; // 10mm (~38px) after last usage
+
+      // Draw Bus Rails & Labels
+      for (let vi = 0; vi < nVars; vi++) {
+        const info = varInfo[vi];
+        ctx.fillStyle = info.color;
+        ctx.font = 'bold 16px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(info.name, info.x, LABEL_H - 8);
+        wireV(ctx, info.x, LABEL_H, busEndY, info.color, 2);
+
+        if (info.hasComp) {
+          wireV(ctx, info.compX, LABEL_H + 12, busEndY, info.color, 2);
+          ctx.fillText(info.name + "'", info.compX, LABEL_H - 8);
+        }
+      }
+
+      // Draw Inverters
+      const notY = LABEL_H + 12;
+      for (let vi = 0; vi < nVars; vi++) {
+        const info = varInfo[vi];
+        if (!info.hasComp) continue;
+        const nx = info.x + 8;
+        ctx.strokeStyle = info.color; ctx.lineWidth = 2; ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.moveTo(nx, notY - NOT_H / 2);
+        ctx.lineTo(nx + NOT_W, notY);
+        ctx.lineTo(nx, notY + NOT_H / 2);
+        ctx.closePath(); ctx.fill(); ctx.stroke();
+        ctx.beginPath(); ctx.arc(nx + NOT_W + 3, notY, 3, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        junction(ctx, info.x, notY, info.color);
+        wireH(ctx, info.x, nx, notY, info.color, 1.5);
+        wireH(ctx, nx + NOT_W + 6, info.compX, notY, info.color, 2);
+        registerGateOutput(info.compX, notY, 'NOT', `${info.name}'`);
+      }
+
+      // Render each term
+      const termOutputs = [];
+      const startGateX = BUS_RIGHT + 30;
+
+      for (let ti = 0; ti < termLayouts.length; ti++) {
+        const { pt, yStart } = termLayouts[ti];
+        let termOut = null;
+
+        if (pt.inner && (pt.inner.type === 'XOR' || pt.inner.type === 'XNOR')) {
+          const gType = pt.inner.type;
+          const xVars = pt.inner.vars;
+
+          let curXORSignals = xVars.map((vn, idx) => {
+            const b = getBus(vn, false);
+            return { x: b.x, y: yStart + 8 + idx * (GATE_H + 8), color: b.color, expr: vn, fromBus: true };
+          });
+
+          let xorGateX = startGateX;
+          while (curXORSignals.length > 1) {
+            const nextXOR = [];
+            const nPairs = Math.ceil(curXORSignals.length / 2);
+            const isLastXOR = (curXORSignals.length <= 2);
+
+            for (let p = 0; p < nPairs; p++) {
+              const a = curXORSignals[p * 2];
+              const b = (p * 2 + 1 < curXORSignals.length) ? curXORSignals[p * 2 + 1] : null;
+              if (b) {
+                const gy = (a.y + b.y) / 2 - GATE_H / 2;
+                const curGType = (isLastXOR && gType === 'XNOR') ? 'XNOR' : 'XOR';
+                const out = drawGate2(ctx, curGType, xorGateX, gy, GATE_W, GATE_H);
+                if (a.fromBus) busTap(ctx, a.x, out.in1y, out.inX, a.color, 1.8);
+                else wireToPin(ctx, a.x, a.y, out.inX, out.in1y, LC, 1.5);
+                if (b.fromBus) busTap(ctx, b.x, out.in2y, out.inX, b.color, 1.8);
+                else wireToPin(ctx, b.x, b.y, out.inX, out.in2y, LC, 1.5);
+                const outExpr = (curGType === 'XNOR') ? `${a.expr} ⊙ ${b.expr}` : `${a.expr} ⊕ ${b.expr}`;
+                registerGateOutput(out.x, out.y, curGType, outExpr);
+                nextXOR.push({ x: out.x, y: out.y, expr: outExpr, fromBus: false });
+              } else {
+                wireH(ctx, a.x, xorGateX + GATE_W, a.y, LC, 1.5);
+                nextXOR.push({ x: xorGateX + GATE_W, y: a.y, expr: a.expr, fromBus: false });
+              }
+            }
+            curXORSignals = nextXOR;
+            xorGateX += GATE_W + LAYER_GAP;
+          }
+
+          const xorFinal = curXORSignals[0];
+
+          if (pt.prefixLits.length > 0) {
+            let andInputs = [{ x: xorFinal.x, y: xorFinal.y, expr: `(${xorFinal.expr})`, fromBus: false }];
+            pt.prefixLits.forEach((lit, li) => {
+              const b = getBus(lit.v, lit.c);
+              const py = xorFinal.y + (li + 1) * 32;
+              const litStr = lit.v + (lit.c ? "'" : '');
+              andInputs.push({ x: b.x, y: py, color: b.color, expr: litStr, fromBus: true });
+            });
+
+            let andGateX = xorGateX;
+            while (andInputs.length > 1) {
+              const nextAnd = [];
+              const nPairs = Math.ceil(andInputs.length / 2);
+              for (let p = 0; p < nPairs; p++) {
+                const a = andInputs[p * 2];
+                const b = (p * 2 + 1 < andInputs.length) ? andInputs[p * 2 + 1] : null;
+                if (b) {
+                  const gy = (a.y + b.y) / 2 - GATE_H / 2;
+                  const out = drawGate2(ctx, 'AND', andGateX, gy, GATE_W, GATE_H);
+                  if (a.fromBus) busTap(ctx, a.x, out.in1y, out.inX, a.color, 1.8);
+                  else wireToPin(ctx, a.x, a.y, out.inX, out.in1y, LC, 1.5);
+                  if (b.fromBus) busTap(ctx, b.x, out.in2y, out.inX, b.color, 1.8);
+                  else wireToPin(ctx, b.x, b.y, out.inX, out.in2y, LC, 1.5);
+                  const outExpr = `${a.expr} · ${b.expr}`;
+                  registerGateOutput(out.x, out.y, 'AND', outExpr);
+                  nextAnd.push({ x: out.x, y: out.y, expr: outExpr, fromBus: false });
+                } else {
+                  wireH(ctx, a.x, andGateX + GATE_W, a.y, LC, 1.5);
+                  nextAnd.push({ x: andGateX + GATE_W, y: a.y, expr: a.expr, fromBus: false });
+                }
+              }
+              andInputs = nextAnd;
+              andGateX += GATE_W + LAYER_GAP;
+            }
+            termOut = andInputs[0];
+          } else {
+            termOut = xorFinal;
+          }
+        } else {
+          const lits = pt.prefixLits;
+          if (lits.length === 1) {
+            const b = getBus(lits[0].v, lits[0].c);
+            const py = yStart + GATE_H / 2;
+            const outX = startGateX + 2 * (GATE_W + LAYER_GAP);
+            busTap(ctx, b.x, py, outX, b.color, 1.8);
+            termOut = { x: outX, y: py, expr: lits[0].v + (lits[0].c ? "'" : '') };
+          } else if (lits.length > 1) {
+            let curAndSignals = lits.map((lit, li) => {
+              const b = getBus(lit.v, lit.c);
+              const litStr = lit.v + (lit.c ? "'" : '');
+              return { x: b.x, y: yStart + 8 + li * 28, color: b.color, expr: litStr, fromBus: true };
+            });
+            let andGateX = startGateX;
+            while (curAndSignals.length > 1) {
+              const nextAnd = [];
+              const nPairs = Math.ceil(curAndSignals.length / 2);
+              for (let p = 0; p < nPairs; p++) {
+                const a = curAndSignals[p * 2];
+                const b = (p * 2 + 1 < curAndSignals.length) ? curAndSignals[p * 2 + 1] : null;
+                if (b) {
+                  const gy = (a.y + b.y) / 2 - GATE_H / 2;
+                  const out = drawGate2(ctx, 'AND', andGateX, gy, GATE_W, GATE_H);
+                  if (a.fromBus) busTap(ctx, a.x, out.in1y, out.inX, a.color, 1.8);
+                  else wireToPin(ctx, a.x, a.y, out.inX, out.in1y, LC, 1.5);
+                  if (b.fromBus) busTap(ctx, b.x, out.in2y, out.inX, b.color, 1.8);
+                  else wireToPin(ctx, b.x, b.y, out.inX, out.in2y, LC, 1.5);
+                  const outExpr = `${a.expr} · ${b.expr}`;
+                  registerGateOutput(out.x, out.y, 'AND', outExpr);
+                  nextAnd.push({ x: out.x, y: out.y, expr: outExpr, fromBus: false });
+                } else {
+                  wireH(ctx, a.x, andGateX + GATE_W, a.y, LC, 1.5);
+                  nextAnd.push({ x: andGateX + GATE_W, y: a.y, expr: a.expr, fromBus: false });
+                }
+              }
+              curAndSignals = nextAnd;
+              andGateX += GATE_W + LAYER_GAP;
+            }
+            termOut = curAndSignals[0];
+          }
+        }
+
+        if (termOut) termOutputs.push(termOut);
+      }
+
+      // Combine term outputs with OR gate if multiple terms
+      if (termOutputs.length === 1) {
+        const finalOut = termOutputs[0];
+        wireH(ctx, finalOut.x, finalOut.x + 40, finalOut.y, LC, 2.5);
+        ctx.fillStyle = '#059669'; ctx.font = 'bold 20px monospace'; ctx.fillText('F', finalOut.x + 52, finalOut.y + 7);
+        registerGateOutput(finalOut.x + 40, finalOut.y, 'OUT', `F = ${finalOut.expr || factExpr}`);
+      } else if (termOutputs.length > 1) {
+        let curOr = termOutputs.slice();
+        const maxX = Math.max(...curOr.map(o => o.x));
+        let orGateX = maxX + LAYER_GAP;
+        while (curOr.length > 1) {
+          const nextOr = [];
+          const nPairs = Math.ceil(curOr.length / 2);
+          const isRoot = (curOr.length <= 2 && nPairs === 1);
+          for (let p = 0; p < nPairs; p++) {
+            const a = curOr[p * 2];
+            const b = (p * 2 + 1 < curOr.length) ? curOr[p * 2 + 1] : null;
+            if (b) {
+              const gy = (a.y + b.y) / 2 - GATE_H / 2;
+              const out = drawGate2(ctx, 'OR', orGateX, gy, GATE_W, GATE_H);
+              wireToPin(ctx, a.x, a.y, out.inX, out.in1y, LC, 1.5);
+              wireToPin(ctx, b.x, b.y, out.inX, out.in2y, LC, 1.5);
+              const outExpr = isRoot ? `F = ${a.expr} + ${b.expr}` : `${a.expr} + ${b.expr}`;
+              registerGateOutput(out.x, out.y, 'OR', outExpr);
+              nextOr.push({ ...out, expr: `${a.expr} + ${b.expr}` });
+            } else {
+              wireH(ctx, a.x, orGateX + GATE_W, a.y, LC, 1.5);
+              nextOr.push({ x: orGateX + GATE_W, y: a.y, expr: a.expr });
+            }
+          }
+          curOr = nextOr;
+          orGateX += GATE_W + LAYER_GAP;
+        }
+        const finalOut = curOr[0];
+        wireH(ctx, finalOut.x, finalOut.x + 40, finalOut.y, LC, 2.5);
+        ctx.fillStyle = '#059669'; ctx.font = 'bold 20px monospace'; ctx.fillText('F', finalOut.x + 52, finalOut.y + 7);
+        registerGateOutput(finalOut.x + 40, finalOut.y, 'OUT', `F = ${factExpr}`);
+      }
+      saveCircuitBaseState();
+    }
+
+    function drawANDORTree() {
+      circuitGateOutputs = [];
+      if (!result || !result.expression || result.expression === '0') {
+        renderEmptyCircuit('F = 0 (دالة تساوي صفراً دوماً)');
+        return;
+      }
+      if (result.expression === '1') {
+        renderEmptyCircuit('F = 1 (دالة تساوي واحداً دوماً)');
+        return;
+      }
+      showCircuitExpr(null, null);
+
+      var terms = parseSOP(result.expression);
+      if (terms.length === 0) return;
+
+      var vars = getVars(terms);
+      var nVars = vars.length, nTerms = terms.length;
+
+      var needsComp = {};
+      for (var i = 0; i < nVars; i++) needsComp[vars[i]] = false;
+      for (var i = 0; i < nTerms; i++)
+        for (var j = 0; j < terms[i].lits.length; j++)
+          if (terms[i].lits[j].c) needsComp[terms[i].lits[j].v] = true;
+
+      var VAR_COLORS = ['#2563eb', '#dc2626', '#059669', '#7c3aed', '#d97706', '#0891b2'];
+      var VAR_W = 60, GATE_W = 44, GATE_H = 34, BUB = 4.5;
+      var LABEL_H = 30, NOT_W = 20, NOT_H = 16;
+      var TERM_GAP = 24, LAYER_GAP = 40, LC = '#1e293b';
+
+      var varInfo = [];
+      var curBusX = 40;
+      for (var vi = 0; vi < nVars; vi++) {
+        var hc = needsComp[vars[vi]];
+        var colW = hc ? 80 : 52;
+        var vx = curBusX + 16;
+        var cx = hc ? vx + 8 + NOT_W + BUB * 2 + 14 : 0;
+        var color = VAR_COLORS[vi % VAR_COLORS.length];
+        varInfo.push({ name: vars[vi], x: vx, hasComp: hc, compX: cx, color: color });
+        curBusX += colW;
+      }
+      var BUS_RIGHT = curBusX + 10;
+
+      var termTrees = [];
+      for (var ti = 0; ti < nTerms; ti++) {
+        var lits = terms[ti].lits, nLits = lits.length;
+        var layers = [], cur = nLits;
+        while (cur > 1) { layers.push(Math.ceil(cur / 2)); cur = Math.ceil(cur / 2); }
+        var treeDepth = layers.length;
+        var termH = Math.max(GATE_H + 16, nLits * (GATE_H + 12));
+        termTrees.push({ lits, nLits, layers, treeDepth, termH });
+      }
+
+      var curY = LABEL_H + 20;
+      for (var ti = 0; ti < nTerms; ti++) {
+        termTrees[ti].yStart = curY;
+        curY += termTrees[ti].termH + TERM_GAP;
+      }
+      var totalH = Math.max(curY + 40, 180);
+
+      var maxDepth = 0;
+      for (var ti = 0; ti < nTerms; ti++) if (termTrees[ti].treeDepth > maxDepth) maxDepth = termTrees[ti].treeDepth;
+      var orLayers = 0, orCur = nTerms;
+      while (orCur > 1) { orLayers++; orCur = Math.ceil(orCur / 2); }
+      var totalDepth = maxDepth + 1 + orLayers;
+      var totalW = BUS_RIGHT + 40 + totalDepth * (GATE_W + LAYER_GAP) + 80;
+
+      var canvas = document.getElementById('circuitCanvas');
+      var dpr = window.devicePixelRatio || 1;
+      canvas.width = totalW * dpr; canvas.height = totalH * dpr;
+      canvas.style.width = totalW + 'px'; canvas.style.height = totalH + 'px';
+      var ctx = canvas.getContext('2d');
+      ctx.scale(dpr, dpr);
+      ctx.clearRect(0, 0, totalW, totalH);
+
+      // Calculate the lowest bus tap across all inputs to terminate lines uniformly 10mm (38px) below
+      var maxBusTapY = LABEL_H + 30;
+      for (var ti = 0; ti < nTerms; ti++) {
+        var tree = termTrees[ti];
+        var nLits = tree.nLits, yBase = tree.yStart;
+        if (nLits === 1) {
+          var outY = yBase + GATE_H / 2;
+          if (outY > maxBusTapY) maxBusTapY = outY;
+        } else {
+          var pairs = Math.ceil(nLits / 2);
+          for (var p = 0; p < pairs; p++) {
+            var gy = yBase + p * (GATE_H + TERM_GAP);
+            var in2y = gy + GATE_H * 0.72;
+            if (in2y > maxBusTapY) maxBusTapY = in2y;
+          }
+        }
+      }
+      var busEndY = maxBusTapY + 38; // 10mm (~38px) after last usage
+
+      for (var vi = 0; vi < nVars; vi++) {
+        var info = varInfo[vi];
+        ctx.fillStyle = info.color;
+        ctx.font = 'bold 16px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(info.name, info.x, LABEL_H - 8);
+        wireV(ctx, info.x, LABEL_H, busEndY, info.color, 2);
+
+        if (info.hasComp) {
+          wireV(ctx, info.compX, LABEL_H + 12, busEndY, info.color, 2);
+          ctx.fillText(info.name + "'", info.compX, LABEL_H - 8);
+        }
+      }
+
+      var notY = LABEL_H + 12;
+      for (var vi = 0; vi < nVars; vi++) {
+        var info = varInfo[vi];
+        if (!info.hasComp) continue;
+        var nx = info.x + 8;
+        ctx.strokeStyle = info.color; ctx.lineWidth = 2; ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.moveTo(nx, notY - NOT_H / 2);
+        ctx.lineTo(nx + NOT_W, notY);
+        ctx.lineTo(nx, notY + NOT_H / 2);
+        ctx.closePath(); ctx.fill(); ctx.stroke();
+        ctx.beginPath(); ctx.arc(nx + NOT_W + 3, notY, 3, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        junction(ctx, info.x, notY, info.color);
+        wireH(ctx, info.x, nx, notY, info.color, 1.5);
+        wireH(ctx, nx + NOT_W + 6, info.compX, notY, info.color, 2);
+        registerGateOutput(info.compX, notY, 'NOT', `${info.name}'`);
+      }
+
+      function getBus(vn, comp) {
+        for (var i = 0; i < varInfo.length; i++) {
+          if (varInfo[i].name === vn) return { x: comp ? varInfo[i].compX : varInfo[i].x, color: varInfo[i].color };
+        }
+        return { x: 40, color: LC };
+      }
+
+      var andOutputs = [];
+      for (var ti = 0; ti < nTerms; ti++) {
+        var tree = termTrees[ti];
+        var lits = tree.lits, nLits = tree.nLits, yBase = tree.yStart;
+
+        if (nLits === 1) {
+          var bus = getBus(lits[0].v, lits[0].c);
+          var outX = BUS_RIGHT + 30 + maxDepth * (GATE_W + LAYER_GAP);
+          var outY = yBase + GATE_H / 2;
+          busTap(ctx, bus.x, outY, outX, bus.color, 1.8);
+          andOutputs.push({ x: outX, y: outY, expr: lits[0].v + (lits[0].c ? "'" : '') });
+          continue;
+        }
+
+        var currentOutputs = [];
+        var pairs = Math.ceil(nLits / 2);
+        var layerYStart = yBase;
+        var gateX = BUS_RIGHT + 30;
+
+        for (var p = 0; p < pairs; p++) {
+          var litA = lits[p * 2];
+          var litB = (p * 2 + 1 < nLits) ? lits[p * 2 + 1] : null;
+          var gy = layerYStart + p * (GATE_H + TERM_GAP);
+          var exprA = litA.v + (litA.c ? "'" : '');
+
+          if (litB) {
+            var out = drawGate2(ctx, 'AND', gateX, gy, GATE_W, GATE_H);
+            var bA = getBus(litA.v, litA.c);
+            var bB = getBus(litB.v, litB.c);
+            busTap(ctx, bA.x, out.in1y, out.inX, bA.color, 1.8);
+            busTap(ctx, bB.x, out.in2y, out.inX, bB.color, 1.8);
+            var exprB = litB.v + (litB.c ? "'" : '');
+            var outExpr = `${exprA} · ${exprB}`;
+            registerGateOutput(out.x, out.y, 'AND', outExpr);
+            currentOutputs.push({ ...out, expr: outExpr });
+          } else {
+            var iy = gy + GATE_H / 2;
+            var bA = getBus(litA.v, litA.c);
+            busTap(ctx, bA.x, iy, gateX + GATE_W, bA.color, 1.8);
+            currentOutputs.push({ x: gateX + GATE_W, y: iy, expr: exprA });
+          }
+        }
+
+        while (currentOutputs.length > 1) {
+          var nextX = gateX + GATE_W + LAYER_GAP;
+          var nextOutputs = [];
+          var nPairs = Math.ceil(currentOutputs.length / 2);
+
+          for (var p = 0; p < nPairs; p++) {
+            var a = currentOutputs[p * 2];
+            var b = (p * 2 + 1 < currentOutputs.length) ? currentOutputs[p * 2 + 1] : null;
+            if (b) {
+              var gy = (a.y + b.y) / 2 - GATE_H / 2;
+              var out = drawGate2(ctx, 'AND', nextX, gy, GATE_W, GATE_H);
+              wireToPin(ctx, a.x, a.y, out.inX, out.in1y, LC, 1.5);
+              wireToPin(ctx, b.x, b.y, out.inX, out.in2y, LC, 1.5);
+              var outExpr = `${a.expr} · ${b.expr}`;
+              registerGateOutput(out.x, out.y, 'AND', outExpr);
+              nextOutputs.push({ ...out, expr: outExpr });
+            } else {
+              wireH(ctx, a.x, nextX + GATE_W, a.y, LC, 1.5);
+              nextOutputs.push({ x: nextX + GATE_W, y: a.y, expr: a.expr });
+            }
+          }
+          currentOutputs = nextOutputs;
+          gateX = nextX;
+        }
+        andOutputs.push(currentOutputs[0]);
+      }
+
+      if (nTerms === 1) {
+        var finalOut = andOutputs[0];
+        wireH(ctx, finalOut.x, finalOut.x + 40, finalOut.y, LC, 2.5);
+        ctx.fillStyle = '#059669'; ctx.font = 'bold 20px monospace'; ctx.fillText('F', finalOut.x + 52, finalOut.y + 7);
+        registerGateOutput(finalOut.x + 40, finalOut.y, 'OUT', `F = ${finalOut.expr || result.expression}`);
+      } else {
+        var cur = andOutputs.slice();
+        var orGateX = BUS_RIGHT + 30 + maxDepth * (GATE_W + LAYER_GAP) + LAYER_GAP;
+        while (cur.length > 1) {
+          var next = [];
+          var nPairs = Math.ceil(cur.length / 2);
+          var isRoot = (cur.length <= 2 && nPairs === 1);
+          for (var p = 0; p < nPairs; p++) {
+            var a = cur[p * 2];
+            var b = (p * 2 + 1 < cur.length) ? cur[p * 2 + 1] : null;
+            if (b) {
+              var gy = (a.y + b.y) / 2 - GATE_H / 2;
+              var out = drawGate2(ctx, 'OR', orGateX, gy, GATE_W, GATE_H);
+              wireToPin(ctx, a.x, a.y, out.inX, out.in1y, LC, 1.5);
+              wireToPin(ctx, b.x, b.y, out.inX, out.in2y, LC, 1.5);
+              var outExpr = isRoot ? `F = ${a.expr} + ${b.expr}` : `${a.expr} + ${b.expr}`;
+              registerGateOutput(out.x, out.y, 'OR', outExpr);
+              next.push({ ...out, expr: `${a.expr} + ${b.expr}` });
+            } else {
+              wireH(ctx, a.x, orGateX + GATE_W, a.y, LC, 1.5);
+              next.push({ x: orGateX + GATE_W, y: a.y, expr: a.expr });
+            }
+          }
+          cur = next;
+          orGateX += GATE_W + LAYER_GAP;
+        }
+        wireH(ctx, cur[0].x, cur[0].x + 40, cur[0].y, LC, 2.5);
+        ctx.fillStyle = '#059669'; ctx.font = 'bold 20px monospace'; ctx.fillText('F', cur[0].x + 52, cur[0].y + 7);
+        registerGateOutput(cur[0].x + 40, cur[0].y, 'OUT', `F = ${result.expression}`);
+      }
+      saveCircuitBaseState();
+    }
+
+    function drawUniversalCircuit(gateType) {
+      circuitGateOutputs = [];
+      if (!result || !result.expression || result.expression === '0') {
+        renderEmptyCircuit('F = 0');
+        return;
+      }
+      var terms, dm;
+      if (gateType === 'NAND') {
+        dm = getDeMorganNAND();
+        showCircuitExpr(dm ? dm.deMorganExpr : null, dm ? dm.steps : null);
+        terms = parseSOP(result.expression);
+      } else {
+        terms = getPOSTerms();
+        dm = getDeMorganNOR();
+        showCircuitExpr(dm ? dm.deMorganExpr : null, dm ? dm.steps : null);
+      }
+
+      if (!terms || terms.length === 0) {
+        renderEmptyCircuit('لا يمكن استخراج شكل ' + gateType + ' لهذه الحالة');
+        return;
+      }
+
+      var allVars = [];
+      for (var i = 0; i < terms.length; i++)
+        for (var j = 0; j < terms[i].lits.length; j++)
+          if (allVars.indexOf(terms[i].lits[j].v) === -1) allVars.push(terms[i].lits[j].v);
+      allVars.sort();
+      var nVars = allVars.length, nTerms = terms.length;
+
+      var VAR_COLORS = ['#2563eb', '#dc2626', '#059669', '#7c3aed', '#d97706', '#0891b2'];
+      var GATE_W = 44, GATE_H = 34, BUB = 4.5;
+      var LABEL_H = 30, TERM_GAP = 24, LAYER_GAP = 36, INV_GAP = 14;
+      var LC = '#1e293b', VAR_W = 55;
+      var POST_BUB = 8; // ~2mm stub drawn after every bubble by drawGate2
+      var gateSpan = GATE_W + BUB * 2 + POST_BUB; // effective gate footprint = 61px
+
+      function treeDepth(n) { var d = 0, c = n; while (c > 1) { d++; c = Math.ceil(c / 2); } return d; }
+      function treeColCount(n) { var d = treeDepth(n); return (d === 0) ? 1 : (2 * d - 1); }
+      function getColX(baseX, colIdx) {
+        var x = baseX;
+        for (var j = 0; j < colIdx; j++) x += gateSpan + ((j % 2 === 0) ? INV_GAP : LAYER_GAP);
+        return x;
+      }
+      function treeWidth(n) {
+        var cols = treeColCount(n);
+        if (cols <= 1) return gateSpan;
+        var w = cols * gateSpan;
+        for (var j = 0; j < cols - 1; j++) w += (j % 2 === 0) ? INV_GAP : LAYER_GAP;
+        return w;
+      }
+
+      var varInfo = [];
+      var curBusX = 40;
+      for (var vi = 0; vi < nVars; vi++) {
+        var vx = curBusX + 18;
+        var color = VAR_COLORS[vi % VAR_COLORS.length];
+        varInfo.push({ name: allVars[vi], x: vx, color: color });
+        curBusX += VAR_W;
+      }
+      var busStart = 40, BUS_RIGHT = curBusX + 10;
+
+      var invBaseX = BUS_RIGHT + 30;
+      var treeBaseX = invBaseX + gateSpan + INV_GAP;
+
+      var termTrees = [];
+      for (var ti = 0; ti < nTerms; ti++) {
+        var nLits = terms[ti].lits.length;
+        var d = treeDepth(nLits);
+        var termH = Math.max(GATE_H + 16, nLits * (GATE_H + 12));
+        termTrees.push({ lits: terms[ti].lits, nLits: nLits, depth: d, termH: termH });
+      }
+
+      var curY = LABEL_H + 20;
+      for (var ti = 0; ti < nTerms; ti++) {
+        termTrees[ti].yStart = curY;
+        curY += termTrees[ti].termH + TERM_GAP;
+      }
+      var totalH = Math.max(curY + 40, 180);
+
+      var maxTreeWidth = 0;
+      for (var ti = 0; ti < nTerms; ti++) {
+        var tw = treeWidth(termTrees[ti].nLits);
+        if (tw > maxTreeWidth) maxTreeWidth = tw;
+      }
+      var combWidth = treeWidth(nTerms);
+      var totalW = invBaseX + gateSpan + INV_GAP + maxTreeWidth + LAYER_GAP + combWidth + 80;
+
+      var canvas = document.getElementById('circuitCanvas');
+      var dpr = window.devicePixelRatio || 1;
+      canvas.width = totalW * dpr; canvas.height = totalH * dpr;
+      canvas.style.width = totalW + 'px'; canvas.style.height = totalH + 'px';
+      var ctx = canvas.getContext('2d');
+      ctx.scale(dpr, dpr);
+      ctx.clearRect(0, 0, totalW, totalH);
+
+      // Calculate the lowest bus tap across all inputs to terminate lines uniformly 10mm (38px) below
+      var maxBusTapY = LABEL_H + 30;
+      for (var ti = 0; ti < nTerms; ti++) {
+        var tree = termTrees[ti];
+        var inputYStart = tree.yStart + 8;
+        for (var li = 0; li < tree.nLits; li++) {
+          var iy = inputYStart + li * (GATE_H + 4);
+          if (iy > maxBusTapY) maxBusTapY = iy;
+        }
+      }
+      var busEndY = maxBusTapY + 38; // 10mm (~38px) after last usage
+
+      for (var vi = 0; vi < nVars; vi++) {
+        var info = varInfo[vi];
+        ctx.fillStyle = info.color;
+        ctx.font = 'bold 16px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(info.name, info.x, LABEL_H - 8);
+        wireV(ctx, info.x, LABEL_H, busEndY, info.color, 2);
+      }
+
+      function getBus(vn) {
+        for (var i = 0; i < varInfo.length; i++) if (varInfo[i].name === vn) return varInfo[i];
+        return { x: busStart, color: LC };
+      }
+
+      var termOutputs = [];
+      for (var ti = 0; ti < nTerms; ti++) {
+        var tree = termTrees[ti];
+        var lits = tree.lits, nLits = tree.nLits;
+        var inputYStart = tree.yStart + 8;
+        var effectiveInputs = [];
+
+        for (var li = 0; li < nLits; li++) {
+          var iy = inputYStart + li * (GATE_H + 4);
+          var bus = getBus(lits[li].v);
+          if (lits[li].c) {
+            var invOut = drawGate2(ctx, gateType, invBaseX, iy - GATE_H / 2, GATE_W, GATE_H);
+            busTapToInverter(ctx, bus.x, invOut, bus.color, 1.8);
+            var invExpr = (gateType === 'NAND')
+              ? `(${lits[li].v} · ${lits[li].v})' = ${lits[li].v}'`
+              : `(${lits[li].v} + ${lits[li].v})' = ${lits[li].v}'`;
+            registerGateOutput(invOut.x, invOut.y, gateType, invExpr);
+            effectiveInputs.push({ x: invOut.x, y: iy, expr: `${lits[li].v}'`, fromBus: false });
+          } else {
+            effectiveInputs.push({ x: bus.x, y: iy, expr: lits[li].v, fromBus: true, color: bus.color });
+          }
+        }
+
+        if (nLits === 1) {
+          var inp = effectiveInputs[0];
+          var col0X = getColX(treeBaseX, 0);
+          var invOut = drawGate2(ctx, gateType, col0X, inp.y - GATE_H / 2, GATE_W, GATE_H);
+          if (inp.fromBus) {
+            busTapToInverter(ctx, inp.x, invOut, inp.color || LC, 1.8);
+          } else {
+            wireGateToInverter(ctx, inp.x, inp.y, invOut, LC, 1.5);
+          }
+          var invExpr = (gateType === 'NAND')
+            ? `(${inp.expr} · ${inp.expr})' = ${inp.expr}'`
+            : `(${inp.expr} + ${inp.expr})' = ${inp.expr}'`;
+          registerGateOutput(invOut.x, invOut.y, gateType, invExpr);
+          termOutputs.push({ x: invOut.x, y: invOut.y, expr: `${inp.expr}'` });
+          continue;
+        }
+
+        var current = effectiveInputs.slice();
+        var colIdx = 0, level = 0;
+        while (current.length > 1) {
+          var colX = getColX(treeBaseX, colIdx);
+          var nPairs = Math.ceil(current.length / 2);
+          var nextLevel = [];
+          var isRoot = (level === tree.depth - 1);
+
+          for (var p = 0; p < nPairs; p++) {
+            var a = current[p * 2];
+            var b = (p * 2 + 1 < current.length) ? current[p * 2 + 1] : null;
+            if (b) {
+              var gy = (a.y + b.y) / 2 - GATE_H / 2;
+              var out = drawGate2(ctx, gateType, colX, gy, GATE_W, GATE_H);
+              if (a.fromBus) busTap(ctx, a.x, out.in1y, out.inX, a.color || LC, 1.8);
+              else wireToPin(ctx, a.x, a.y, out.inX, out.in1y, LC, 1.5);
+              if (b.fromBus) busTap(ctx, b.x, out.in2y, out.inX, b.color || LC, 1.8);
+              else wireToPin(ctx, b.x, b.y, out.inX, out.in2y, LC, 1.5);
+              var op = (gateType === 'NAND') ? '·' : '+';
+              var outExpr = `(${a.expr} ${op} ${b.expr})'`;
+              registerGateOutput(out.x, out.y, gateType, outExpr);
+              nextLevel.push({ ...out, expr: outExpr });
+            } else {
+              if (a.fromBus) busTap(ctx, a.x, a.y, colX + gateSpan, a.color || LC, 1.8);
+              else wireH(ctx, a.x, colX + gateSpan, a.y, LC, 1.5);
+              nextLevel.push({ x: colX + gateSpan, y: a.y, expr: a.expr, passThrough: true });
+            }
+          }
+
+          if (!isRoot) {
+            colIdx++;
+            var invColX = getColX(treeBaseX, colIdx);
+            var inverted = [];
+            for (var i = 0; i < nextLevel.length; i++) {
+              var sig = nextLevel[i];
+              if (sig.passThrough) {
+                wireH(ctx, sig.x, invColX + gateSpan, sig.y, LC, 1.5);
+                inverted.push({ x: invColX + gateSpan, y: sig.y, expr: sig.expr, passThrough: true });
+              } else {
+                var gy = sig.y - GATE_H / 2;
+                var invOut = drawGate2(ctx, gateType, invColX, gy, GATE_W, GATE_H);
+                wireGateToInverter(ctx, sig.x, sig.y, invOut, LC, 1.5);
+                var unnegated = (sig.expr.startsWith('(') && sig.expr.endsWith(")'"))
+                  ? sig.expr.slice(1, -2)
+                  : `(${sig.expr})'`;
+                var invExpr = `( (${sig.expr}) )' = ${unnegated}`;
+                registerGateOutput(invOut.x, invOut.y, gateType, invExpr);
+                inverted.push({ ...invOut, expr: unnegated });
+              }
+            }
+            current = inverted;
+          } else {
+            current = nextLevel;
+          }
+          colIdx++;
+          level++;
+        }
+        termOutputs.push(current[0]);
+      }
+
+      var combBaseX = invBaseX + gateSpan + INV_GAP + maxTreeWidth + LAYER_GAP;
+      var finalOut;
+
+      if (nTerms === 1) {
+        var inp = termOutputs[0];
+        var fgX = getColX(combBaseX, 0);
+        var invOut = drawGate2(ctx, gateType, fgX, inp.y - GATE_H / 2, GATE_W, GATE_H);
+        wireGateToInverter(ctx, inp.x, inp.y, invOut, LC, 1.5);
+        var op = (gateType === 'NAND') ? '·' : '+';
+        var invExpr = `(${inp.expr} ${op} ${inp.expr})' = ${inp.expr}'`;
+        registerGateOutput(invOut.x, invOut.y, gateType, `F = ${invExpr}`);
+        finalOut = { x: invOut.x, y: invOut.y };
+      } else {
+        var current = termOutputs.slice();
+        var colIdx = 0, level = 0, combDepth = treeDepth(nTerms);
+        while (current.length > 1) {
+          var colX = getColX(combBaseX, colIdx);
+          var nPairs = Math.ceil(current.length / 2);
+          var nextLevel = [];
+          var isRoot = (level === combDepth - 1 && nPairs === 1);
+
+          for (var p = 0; p < nPairs; p++) {
+            var a = current[p * 2];
+            var b = (p * 2 + 1 < current.length) ? current[p * 2 + 1] : null;
+            if (b) {
+              var gy = (a.y + b.y) / 2 - GATE_H / 2;
+              var out = drawGate2(ctx, gateType, colX, gy, GATE_W, GATE_H);
+              wireToPin(ctx, a.x, a.y, out.inX, out.in1y, LC, 1.5);
+              wireToPin(ctx, b.x, b.y, out.inX, out.in2y, LC, 1.5);
+              var op = (gateType === 'NAND') ? '·' : '+';
+              var outExpr = isRoot ? `F = (${a.expr} ${op} ${b.expr})'` : `(${a.expr} ${op} ${b.expr})'`;
+              registerGateOutput(out.x, out.y, gateType, outExpr);
+              nextLevel.push({ ...out, expr: `(${a.expr} ${op} ${b.expr})'` });
+            } else {
+              wireH(ctx, a.x, colX + gateSpan, a.y, LC, 1.5);
+              nextLevel.push({ x: colX + gateSpan, y: a.y, expr: a.expr, passThrough: true });
+            }
+          }
+
+          if (!isRoot) {
+            colIdx++;
+            var invColX = getColX(combBaseX, colIdx);
+            var inverted = [];
+            for (var i = 0; i < nextLevel.length; i++) {
+              var sig = nextLevel[i];
+              if (sig.passThrough) {
+                wireH(ctx, sig.x, invColX + gateSpan, sig.y, LC, 1.5);
+                inverted.push({ x: invColX + gateSpan, y: sig.y, expr: sig.expr, passThrough: true });
+              } else {
+                var gy = sig.y - GATE_H / 2;
+                var invOut = drawGate2(ctx, gateType, invColX, gy, GATE_W, GATE_H);
+                wireToPin(ctx, sig.x, sig.y, invOut.inX, invOut.in1y, LC, 1.5);
+                wireToPin(ctx, sig.x, sig.y, invOut.inX, invOut.in2y, LC, 1.5);
+                var unnegated = (sig.expr.startsWith('(') && sig.expr.endsWith(")'"))
+                  ? sig.expr.slice(1, -2)
+                  : `(${sig.expr})'`;
+                var invExpr = `( (${sig.expr}) )' = ${unnegated}`;
+                registerGateOutput(invOut.x, invOut.y, gateType, invExpr);
+                inverted.push({ ...invOut, expr: unnegated });
+              }
+            }
+            current = inverted;
+          } else {
+            current = nextLevel;
+          }
+          colIdx++;
+          level++;
+        }
+        finalOut = current[0];
+      }
+
+      wireH(ctx, finalOut.x, finalOut.x + 40, finalOut.y, LC, 2.5);
+      ctx.fillStyle = '#059669'; ctx.font = 'bold 20px monospace'; ctx.fillText('F', finalOut.x + 52, finalOut.y + 7);
+      registerGateOutput(finalOut.x + 40, finalOut.y, 'OUT', dm ? `F = ${dm.deMorganExpr}` : `F`);
+      saveCircuitBaseState();
+    }
+
+    function renderEmptyCircuit(msg) {
+      circuitGateOutputs = [];
+      var canvas = document.getElementById('circuitCanvas');
+      canvas.width = 400; canvas.height = 60; canvas.style.width = '400px'; canvas.style.height = '60px';
+      var ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#64748b'; ctx.font = '14px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(msg, 200, 35);
+    }
+
+    // ===== INIT =====
+    function init() {
+      kmap = initKMap(numVars);
+      renderKMap();
+      doSimplify();
+      updateOkBtnState();
+      initDraggableModals();
+      setupCircuitHover();
+    }
+
+    init();
+  </script>
+</body>
+
+</html>
