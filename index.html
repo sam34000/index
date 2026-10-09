@@ -951,7 +951,7 @@
       <div class="logo-icon">K</div>
       <div>
         <h1>Tableau de Karnaugh</h1>
-        <p>Karnaugh Map Solver & Circuit Generator</p>
+        <p>Solveur de tableaux de Karnaugh et générateur de circuits</p>
       </div>
     </div>
     <div class="toolbar" id="toolbar">
@@ -1002,7 +1002,7 @@
         <div class="card">
           <div class="card-header">
             <h2>Tableau de Karnaugh interactif (cliquez sur une cellule pour alterner 0 ➜ 1 ➜ X)</h2>
-            <span>Interactive K-Map</span>
+            <span>Carte de Karnaugh interactive</span>
           </div>
           <div class="card-body">
             <div class="kmap-wrap">
@@ -1015,12 +1015,12 @@
         <div class="card" id="resultCard">
           <div class="card-header">
             <h2>Résultat et simplification</h2>
-            <span>Simplified Result</span>
+            <span>Résultat simplifié</span>
           </div>
           <div class="card-body">
             <div class="result-modes">
-              <button id="rmSOP" class="active" onclick="setResultMode('SOP')">SOP (Somme de produits)</button>
-              <button id="rmPOS" onclick="setResultMode('POS')">POS (Produit de sommes)</button>
+              <button id="rmSOP" class="active" onclick="setResultMode('SOP')">SOP — Somme de produits</button>
+              <button id="rmPOS" onclick="setResultMode('POS')">POS — Produit de sommes</button>
               <button id="rmFactored" onclick="setResultMode('Factored')">Expression logique simplifiée</button>
             </div>
             <div class="result-box">
@@ -1068,7 +1068,7 @@
           </div>
           <div class="circuit-modes">
             <button class="active" id="cmFactored" onclick="drawCirc('Factored')">Expression logique simplifiée</button>
-            <button id="cmANDOR" onclick="drawCirc('ANDOR')">Forme standard (SOP)</button>
+            <button id="cmANDOR" onclick="drawCirc('ANDOR')">Forme standard — SOP</button>
             <button id="cmNAND" onclick="drawCirc('NAND')">NAND uniquement (De Morgan)</button>
             <button id="cmNOR" onclick="drawCirc('NOR')">NOR uniquement (De Morgan)</button>
           </div>
