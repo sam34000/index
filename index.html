@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="fr" dir="ltr">
 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>جدول كارنو - Karnaugh Map Solver v3</title>
+  <title>Tableau de Karnaugh - Solveur v3</title>
   <style>
     * {
       margin: 0;
@@ -644,7 +644,7 @@
       color: #93c5fd;
       font-weight: 700;
       margin-bottom: 3px;
-      direction: rtl;
+      direction: ltr;
       text-align: center;
       font-family: system-ui, -apple-system, sans-serif;
     }
@@ -950,21 +950,21 @@
     <div class="logo">
       <div class="logo-icon">K</div>
       <div>
-        <h1>جدول كارنو</h1>
+        <h1>Tableau de Karnaugh</h1>
         <p>Karnaugh Map Solver & Circuit Generator</p>
       </div>
     </div>
     <div class="toolbar" id="toolbar">
       <div class="tool-group">
-        <span style="font-size:12px;font-weight:700;color:#64748b;padding:0 4px;">المتغيرات:</span>
+        <span style="font-size:12px;font-weight:700;color:#64748b;padding:0 4px;">Variables :</span>
         <button onclick="setNumVars(2)" id="v2">2</button>
         <button onclick="setNumVars(3)" id="v3">3</button>
         <button onclick="setNumVars(4)" id="v4" class="active">4</button>
       </div>
       <div class="tool-group">
-        <button class="btn-action" onclick="fillRandom()" title="توليد معادلة عشوائية في حقل الإدخال">عشوائي</button>
-        <button class="btn-action" onclick="toggleTruthTable()" id="ttBtn">جدول الحقيقة</button>
-        <button class="btn-action" onclick="toggleCircuit()" id="circuitBtn">التمثيل المنطقي</button>
+        <button class="btn-action" onclick="fillRandom()" title="Générer une expression aléatoire dans le champ de saisie">Aléatoire</button>
+        <button class="btn-action" onclick="toggleTruthTable()" id="ttBtn">Table de vérité</button>
+        <button class="btn-action" onclick="toggleCircuit()" id="circuitBtn">Schéma logique</button>
       </div>
     </div>
   </div>
@@ -976,17 +976,17 @@
         <div class="card-body">
           <div class="expr-row">
             <div class="expr-field">
-              <label>المعادلة المنطقية</label>
-              <input type="text" id="exprInput" placeholder="مثال: A'B + AB' أو a'b + ab'" oninput="updateOkBtnState()"
+              <label>Expression logique</label>
+              <input type="text" id="exprInput" placeholder="Exemple : A'B + AB' ou a'b + ab'" oninput="updateOkBtnState()"
                 onkeydown="if(event.key==='Enter')handleOK()">
-              <div class="expr-hint">يدعم الحروف اللاتينية A, B, C, D (كبيرة أو صغيرة)، النفي بـ <code>'</code> أو
-                <code>~</code>، والعمليات <code>+</code> و <code>الأقواس</code></div>
+              <div class="expr-hint">Lettres latines A, B, C, D (majuscules ou minuscules), négation avec <code>'</code> ou
+                <code>~</code>, opérateur <code>+</code> et <code>parenthèses</code>.</div>
             </div>
             <div class="var-field">
-              <label>المتغيرات</label>
+              <label>Variables</label>
               <input type="text" id="varInput" value="A/B/C/D" placeholder="A/B/C/D" oninput="updateOkBtnState()"
                 onkeydown="if(event.key==='Enter')handleOK()">
-              <p>مفصولة بـ <code>/</code></p>
+              <p>Séparées par <code>/</code></p>
             </div>
             <div class="btn-field">
               <button class="ok-btn-inline" id="exprOkBtn" onclick="handleOK()">OK</button>
@@ -1001,7 +1001,7 @@
         <!-- K-Map Card -->
         <div class="card">
           <div class="card-header">
-            <h2>جدول كارنو التفاعلي (اضغط على الخلية للتبديل 0 ➜ 1 ➜ X)</h2>
+            <h2>Tableau de Karnaugh interactif (cliquez sur une cellule pour alterner 0 ➜ 1 ➜ X)</h2>
             <span>Interactive K-Map</span>
           </div>
           <div class="card-body">
@@ -1014,24 +1014,23 @@
         <!-- Result Card -->
         <div class="card" id="resultCard">
           <div class="card-header">
-            <h2>النتيجة والتبسيط</h2>
+            <h2>Résultat et simplification</h2>
             <span>Simplified Result</span>
           </div>
           <div class="card-body">
             <div class="result-modes">
-              <button id="rmSOP" class="active" onclick="setResultMode('SOP')">SOP (مجموع الجداءات)</button>
-              <button id="rmPOS" onclick="setResultMode('POS')">POS (جداء المجاميع)</button>
-              <button id="rmFactored" onclick="setResultMode('Factored')">المعادلة المنطقية المختصرة</button>
+              <button id="rmSOP" class="active" onclick="setResultMode('SOP')">SOP (Somme de produits)</button>
+              <button id="rmPOS" onclick="setResultMode('POS')">POS (Produit de sommes)</button>
+              <button id="rmFactored" onclick="setResultMode('Factored')">Expression logique simplifiée</button>
             </div>
             <div class="result-box">
               <div class="result-expr" id="resultExpr" style="color:#94a3b8;">F = ...</div>
               <div class="result-extra" id="resultExtra" style="display:none;"></div>
             </div>
-            <div class="group-tags" id="groupTags" title="مرر الفأرة فوق أي مجموعة لتظليلها في جدول كارنو"></div>
+            <div class="group-tags" id="groupTags" title="Survolez un groupe pour le mettre en évidence dans le tableau de Karnaugh"></div>
 
             <div id="stepsSection" class="steps-container" style="display:none;">
-              <div style="font-weight:700; font-size:13px; margin-bottom:6px; color:#334155;">📌 تفاصيل التبسيط
-                والمجموعات:</div>
+              <div style="font-weight:700; font-size:13px; margin-bottom:6px; color:#334155;">📌 Détails de la simplification et des groupes :</div>
               <div id="stepsList"></div>
             </div>
           </div>
@@ -1044,34 +1043,34 @@
   <!-- Flexible Draggable, Resizable & Maximizable Floating Window -->
   <div class="modal-overlay" id="dualModal">
     <div class="modal-card" id="dualModalCard">
-      <div class="modal-header" id="dualModalHeader" title="اضغط واسحب لتحريك النافذة في أي اتجاه">
-        <h2 id="modalTitleText">📊 جدول الحقيقة &amp; ⚡ التمثيل المنطقي</h2>
+      <div class="modal-header" id="dualModalHeader" title="Cliquez et faites glisser pour déplacer la fenêtre">
+        <h2 id="modalTitleText">📊 Table de vérité &amp; ⚡ Schéma logique</h2>
         <div class="modal-header-actions">
           <div class="modal-view-tabs">
             <button class="modal-view-tab active" id="tabBtnAll" onclick="setModalMode('all')"
-              title="عرض جدول الحقيقة والتمثيل المنطقي معاً">الكل معاً</button>
-            <button class="modal-view-tab" id="tabBtnTT" onclick="setModalMode('tt')" title="عرض جدول الحقيقة فقط">📊
-              الجدول</button>
+              title="Afficher la table de vérité et le schéma logique ensemble">Vue combinée</button>
+            <button class="modal-view-tab" id="tabBtnTT" onclick="setModalMode('tt')" title="Afficher uniquement la table de vérité">📊
+              Table</button>
             <button class="modal-view-tab" id="tabBtnCirc" onclick="setModalMode('circ')"
-              title="عرض التمثيل المنطقي فقط">⚡ المخطط</button>
+              title="Afficher uniquement le schéma logique">⚡ Schéma</button>
           </div>
           <button class="modal-action-btn" id="modalMaxBtn" onclick="toggleMaximizeModal()"
-            title="تكبير / استعادة حجم الصفحة">⛶</button>
-          <button class="modal-action-btn modal-close-btn" onclick="closeDualModal()" title="إغلاق">✕</button>
+            title="Agrandir / restaurer la fenêtre">⛶</button>
+          <button class="modal-action-btn modal-close-btn" onclick="closeDualModal()" title="Fermer">✕</button>
         </div>
       </div>
       <div class="modal-dual-body">
-        <!-- Right Column: Logic Gate Diagram (اليمين) -->
+        <!-- Right Column: Logic Gate Diagram -->
         <div class="modal-right-col" id="modalRightCol">
           <div
             style="font-size:12.5px; font-weight:800; color:#0f172a; margin-bottom:6px; display:flex; align-items:center; justify-content:space-between;">
-            <span>⚡ التمثيل المنطقي بالبوابات</span>
+            <span>⚡ Schéma logique à portes</span>
           </div>
           <div class="circuit-modes">
-            <button class="active" id="cmFactored" onclick="drawCirc('Factored')">المعادلة المنطقية المختصرة</button>
-            <button id="cmANDOR" onclick="drawCirc('ANDOR')">تمثيل عادي (SOP)</button>
-            <button id="cmNAND" onclick="drawCirc('NAND')">NAND فقط (ديمورقان)</button>
-            <button id="cmNOR" onclick="drawCirc('NOR')">NOR فقط (ديمورقان)</button>
+            <button class="active" id="cmFactored" onclick="drawCirc('Factored')">Expression logique simplifiée</button>
+            <button id="cmANDOR" onclick="drawCirc('ANDOR')">Forme standard (SOP)</button>
+            <button id="cmNAND" onclick="drawCirc('NAND')">NAND uniquement (De Morgan)</button>
+            <button id="cmNOR" onclick="drawCirc('NOR')">NOR uniquement (De Morgan)</button>
           </div>
           <div id="circuitExprBox"
             style="display:none; margin-bottom:6px; padding:4px 8px; background:#f0fdf4; border:1px solid #86efac; border-radius:6px; direction:ltr; text-align:center;">
@@ -1083,15 +1082,15 @@
           </div>
         </div>
 
-        <!-- Left Column: Truth Table (اليسار) -->
+        <!-- Left Column: Truth Table -->
         <div class="modal-left-col" id="modalLeftCol">
           <div
             style="font-size:13px; font-weight:800; color:#0f172a; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
-            📊 جدول الحقيقة
+            📊 Table de vérité
           </div>
           <div class="modal-info-banner">
-            <div>المتغيرات: <span id="modalVarsText">A, B, C, D</span></div>
-            <div>المعادلة: <span id="modalExprText">F = ...</span></div>
+            <div>Variables : <span id="modalVarsText">A, B, C, D</span></div>
+            <div>Expression : <span id="modalExprText">F = ...</span></div>
           </div>
           <div class="truth-table-wrap">
             <table class="truth-table" id="truthTable"></table>
@@ -1536,12 +1535,12 @@
         if (xorInner) {
           hasXOR = true;
           factoredPart = commonStr + '(' + xorInner.expr + ')';
-          steps.push(`إخراج العامل المشترك ${commonStr}: ${rawFactored}`);
-          steps.push(`التعويض بمتطابقة (${xorInner.type}): (${rawInner}) = ${xorInner.expr}`);
-          steps.push(`المعادلة المنطقية المختصرة: ${factoredPart}`);
+          steps.push(`Mise en facteur de ${commonStr} : ${rawFactored}`);
+          steps.push(`Application de l'identité (${xorInner.type}) : (${rawInner}) = ${xorInner.expr}`);
+          steps.push(`Expression logique simplifiée : ${factoredPart}`);
         } else {
           factoredPart = rawFactored;
-          steps.push(`إخراج العامل المشترك ${commonStr}: ${rawFactored}`);
+          steps.push(`Mise en facteur de ${commonStr} : ${rawFactored}`);
         }
 
         var remainingTerms = terms.filter((_, idx) => bestIndices.indexOf(idx) === -1);
@@ -1632,7 +1631,7 @@
           groups: [],
           groupTerms: [],
           essentialPIs: [],
-          steps: ['جميع خلايا جدول كارنو = 0، لذلك الناتج هو ثابت F = 0']
+          steps: ['Toutes les cellules du tableau de Karnaugh valent 0 : la fonction est constante, F = 0.']
         };
       }
 
@@ -1645,7 +1644,7 @@
           groups: [[...Array(total).keys()]],
           groupTerms: ['1'],
           essentialPIs: [[...Array(total).keys()]],
-          steps: ['جميع الخلايا تشكل مجموعة واحدة كبرى بحجم ' + total + '، لذلك الناتج هو ثابت F = 1']
+          steps: ['Toutes les cellules forment un seul groupe de taille ' + total + ' : la fonction est constante, F = 1.']
         };
       }
 
@@ -1701,18 +1700,18 @@
         }).join('');
       }
 
-      steps.push(`تم استخراج ${pis.length} متضمن أولي (Prime Implicants).`);
-      steps.push(`عدد المتضمنات الأولية الأساسية (Essential PIs): ${essential.length}.`);
+      steps.push(`${pis.length} implicant(s) premier(s) trouvé(s).`);
+      steps.push(`${essential.length} implicant(s) premier(s) essentiel(s).`);
       finalGroups.forEach((g, idx) => {
         const mintermsInGroup = g.map(c => {
           const r = Math.floor(c / cols), col = c % cols;
           return getMinterm(r, col, nv);
         }).sort((a, b) => a - b);
-        steps.push(`المجموعة ${idx + 1}: بحجم ${g.length} خلايا m(${mintermsInGroup.join(',')}) ➜ الحد المنطقي: ${groupTerms[idx]}`);
+        steps.push(`Groupe ${idx + 1} : ${g.length} cellule(s), m(${mintermsInGroup.join(',')}) ➜ terme logique : ${groupTerms[idx]}`);
       });
 
       if (factoredObj.factoringSteps && factoredObj.factoringSteps.length > 0) {
-        steps.push(`⚡ خطوات التبسيط المنطقي (استخراج العامل المشترك وبوابات XOR):`);
+        steps.push(`⚡ Étapes de simplification (mise en facteur et portes XOR) :`);
         factoredObj.factoringSteps.forEach(st => steps.push(`&nbsp;&nbsp;• ${st}`));
       }
 
@@ -1865,8 +1864,8 @@
     function parseExpression(exprInput, varInput) {
       const varNames = parseVarNames(varInput);
       const nv = varNames.length;
-      if (nv < 2 || nv > 4) return { success: false, minterms: [], dontCares: [], error: 'يجب أن يكون عدد المتغيرات بين 2 و 4' };
-      if (!exprInput.trim()) return { success: false, minterms: [], dontCares: [], error: 'أدخل المعادلة المنطقية' };
+      if (nv < 2 || nv > 4) return { success: false, minterms: [], dontCares: [], error: 'Le nombre de variables doit être compris entre 2 et 4.' };
+      if (!exprInput.trim()) return { success: false, minterms: [], dontCares: [], error: 'Saisissez une expression logique.' };
 
       // Normalize expression: remove all spaces, convert to uppercase
       let expr = exprInput.trim();
@@ -1898,7 +1897,7 @@
           const cleanNums = expr.replace(/^[mM\u03A3]?\s*\(?/, '').replace(/\)?$/, '');
           const nums = cleanNums.split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n));
           const invalid = nums.filter(n => n < 0 || n >= total);
-          if (invalid.length > 0) return { success: false, minterms: [], dontCares: [], error: 'أرقام خارج النطاق: ' + invalid.join(', ') };
+          if (invalid.length > 0) return { success: false, minterms: [], dontCares: [], error: 'Nombres hors plage : ' + invalid.join(', ') };
           mintermsList = nums;
           return { success: true, minterms: mintermsList, dontCares: dontCaresList };
         } else if (isNumericNotation) {
@@ -1915,7 +1914,7 @@
           success: false,
           minterms: [],
           dontCares: [],
-          error: 'حروف غير معرفة: ' + invalidLetters.join(', ') + ' (المتغيرات المتاحة هي: ' + varNames.join(', ') + ')'
+          error: 'Lettres non définies : ' + invalidLetters.join(', ') + ' (variables disponibles : ' + varNames.join(', ') + ')'
         };
       }
 
@@ -1928,7 +1927,7 @@
             minterms.push(m);
           }
         } catch (e) {
-          return { success: false, minterms: [], dontCares: [], error: 'صيغة المعادلة غير صحيحة' };
+          return { success: false, minterms: [], dontCares: [], error: 'La syntaxe de l’expression est incorrecte.' };
         }
       }
 
@@ -2220,9 +2219,9 @@
       if (result.xorExpression || hasFactoredDiff) {
         extraEl.style.display = 'block';
         if (currentResultMode === 'Factored') {
-          extraEl.innerHTML = `<span style="display:inline-flex; align-items:center; gap:6px; color:#0284c7; font-weight:700; font-size:13px;">⚡ المعادلة المنطقية المختصرة باستخدام العامل المشترك وبوابات XOR / XNOR</span>`;
+          extraEl.innerHTML = `<span style="display:inline-flex; align-items:center; gap:6px; color:#0284c7; font-weight:700; font-size:13px;">⚡ Expression logique simplifiée avec mise en facteur et portes XOR / XNOR</span>`;
         } else {
-          extraEl.innerHTML = `<span style="cursor:pointer; display:inline-flex; align-items:center; gap:6px; background:#eff6ff; border:1px solid #bfdbfe; color:#1d4ed8; padding:4px 12px; border-radius:6px; font-weight:700; font-size:13px; transition:all 0.15s;" onclick="setResultMode('Factored')" title="اضغط هنا لعرض المعادلة المنطقية المختصرة">💡 تبسيط منطقي مختصر (XOR): <strong style="direction:ltr; font-family:monospace; color:#059669;">F = ${result.factoredExpression}</strong> <span style="text-decoration:underline; font-size:11.5px;">(اضغط هنا للعرض)</span></span>`;
+          extraEl.innerHTML = `<span style="cursor:pointer; display:inline-flex; align-items:center; gap:6px; background:#eff6ff; border:1px solid #bfdbfe; color:#1d4ed8; padding:4px 12px; border-radius:6px; font-weight:700; font-size:13px; transition:all 0.15s;" onclick="setResultMode('Factored')" title="Cliquez ici pour afficher l’expression logique simplifiée">💡 Simplification logique (XOR) : <strong style="direction:ltr; font-family:monospace; color:#059669;">F = ${result.factoredExpression}</strong> <span style="text-decoration:underline; font-size:11.5px;">(cliquer pour afficher)</span></span>`;
         }
       } else {
         extraEl.style.display = 'none';
@@ -2461,7 +2460,7 @@
         leftCol.style.flex = '0 0 340px';
         rightCol.style.display = 'flex';
         rightCol.style.flex = '1';
-        titleEl.innerHTML = '📊 جدول الحقيقة &amp; ⚡ التمثيل المنطقي';
+        titleEl.innerHTML = '📊 Table de vérité &amp; ⚡ Schéma logique';
         if (btnAll) btnAll.classList.add('active');
         renderTruthTable();
         drawCirc(circuitMode);
@@ -2472,7 +2471,7 @@
         leftCol.style.flex = '1';
         leftCol.style.width = '100%';
         rightCol.style.display = 'none';
-        titleEl.innerHTML = '📊 جدول الحقيقة (Truth Table)';
+        titleEl.innerHTML = '📊 Table de vérité';
         if (btnTT) btnTT.classList.add('active');
         renderTruthTable();
       } else if (showCirc) {
@@ -2482,7 +2481,7 @@
         rightCol.style.display = 'flex';
         rightCol.style.flex = '1';
         rightCol.style.width = '100%';
-        titleEl.innerHTML = '⚡ التمثيل المنطقي بالبوابات (Logic Diagram)';
+        titleEl.innerHTML = '⚡ Schéma logique à portes';
         if (btnCirc) btnCirc.classList.add('active');
         drawCirc(circuitMode);
       }
@@ -2839,16 +2838,16 @@
 
           if (tooltip) {
             var typeNames = {
-              'AND': 'بوابة ضرب (AND)',
-              'OR': 'بوابة جمع (OR)',
-              'NAND': 'بوابة نفي الضرب (NAND)',
-              'NOR': 'بوابة نفي الجمع (NOR)',
-              'XOR': 'بوابة فصل حصري (XOR)',
-              'XNOR': 'بوابة تكافؤ (XNOR)',
-              'NOT': 'بوابة نفي (NOT)',
-              'OUT': 'المخرج النهائي (Output)'
+              'AND': 'Porte ET (AND)',
+              'OR': 'Porte OU (OR)',
+              'NAND': 'Porte NON-ET (NAND)',
+              'NOR': 'Porte NON-OU (NOR)',
+              'XOR': 'Porte OU exclusif (XOR)',
+              'XNOR': 'Porte d’équivalence (XNOR)',
+              'NOT': 'Porte NON (NOT)',
+              'OUT': 'Sortie finale'
             };
-            var title = typeNames[best.type] || ('مخرج بوابة ' + best.type);
+            var title = typeNames[best.type] || ('Sortie de la porte ' + best.type);
             tooltip.innerHTML = '<div class="tt-title">' + title + '</div><div class="tt-expr">' + best.expr + '</div>';
             tooltip.style.display = 'block';
 
@@ -2894,7 +2893,7 @@
       if (steps && steps.length > 1) {
         var finalStep = steps[steps.length - 1];
         var subSteps = steps.slice(0, -1).join(' &nbsp;➔&nbsp; ');
-        html += '<div style="font-size:11px;color:#64748b;margin-bottom:1px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="' + steps.join(' \n ') + '">قانون ديمورقان: ' + subSteps + '</div>';
+        html += '<div style="font-size:11px;color:#64748b;margin-bottom:1px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="' + steps.join(' \n ') + '">Loi de De Morgan : ' + subSteps + '</div>';
         html += '<div style="font-size:14px;color:#059669;font-weight:800;font-family:monospace;line-height:1.2;">' + finalStep + '</div>';
       } else {
         html = '<div style="font-size:14px;color:#059669;font-weight:800;font-family:monospace;line-height:1.2;">' + text + '</div>';
@@ -2911,8 +2910,8 @@
       var nandExpr = '( ' + nandTerms.join(' · ') + ' )' + "'";
       var steps = [
         'F = ' + sopStr,
-        'F = ( (' + sopStr + ')' + ')' + "'  [النفي المزدوج]",
-        '(' + sopStr + ')' + "' = " + nandTerms.join(' · ') + '  [ديمورقان]',
+        'F = ( (' + sopStr + ')' + ')' + "'  [double négation]",
+        '(' + sopStr + ')' + "' = " + nandTerms.join(' · ') + '  [De Morgan]',
         'F = ' + nandExpr
       ];
       return { deMorganExpr: nandExpr, steps: steps };
@@ -2926,8 +2925,8 @@
       var norExpr = '( ' + norTerms.join(' + ') + ' )' + "'";
       var steps = [
         'F = ' + posStr + '  [POS]',
-        'F = ( (' + posStr + ')' + ')' + "'  [النفي المزدوج]",
-        '(' + posStr + ')' + "' = " + norTerms.join(' + ') + '  [ديمورقان]',
+        'F = ( (' + posStr + ')' + ')' + "'  [double négation]",
+        '(' + posStr + ')' + "' = " + norTerms.join(' + ') + '  [De Morgan]',
         'F = ' + norExpr
       ];
       return { deMorganExpr: norExpr, steps: steps };
@@ -2949,18 +2948,18 @@
     function drawFactoredCircuit() {
       circuitGateOutputs = [];
       if (!result || !result.factoredExpression || result.factoredExpression === '0') {
-        renderEmptyCircuit('F = 0 (دالة تساوي صفراً دوماً)');
+        renderEmptyCircuit('F = 0 (fonction toujours égale à zéro)');
         return;
       }
       if (result.factoredExpression === '1') {
-        renderEmptyCircuit('F = 1 (دالة تساوي واحداً دوماً)');
+        renderEmptyCircuit('F = 1 (fonction toujours égale à un)');
         return;
       }
 
       const factExpr = result.factoredExpression;
       const factSteps = (result.factoredResult && result.factoredResult.factoringSteps && result.factoredResult.factoringSteps.length > 0)
         ? result.factoredResult.factoringSteps
-        : ['المعادلة المنطقية المختصرة: F = ' + factExpr];
+        : ['Expression logique simplifiée : F = ' + factExpr];
       showCircuitExpr(factExpr, factSteps);
 
       // Split top-level terms separated by '+' outside parentheses
@@ -3317,11 +3316,11 @@
     function drawANDORTree() {
       circuitGateOutputs = [];
       if (!result || !result.expression || result.expression === '0') {
-        renderEmptyCircuit('F = 0 (دالة تساوي صفراً دوماً)');
+        renderEmptyCircuit('F = 0 (fonction toujours égale à zéro)');
         return;
       }
       if (result.expression === '1') {
-        renderEmptyCircuit('F = 1 (دالة تساوي واحداً دوماً)');
+        renderEmptyCircuit('F = 1 (fonction toujours égale à un)');
         return;
       }
       showCircuitExpr(null, null);
@@ -3572,7 +3571,7 @@
       }
 
       if (!terms || terms.length === 0) {
-        renderEmptyCircuit('لا يمكن استخراج شكل ' + gateType + ' لهذه الحالة');
+        renderEmptyCircuit('Impossible de générer une forme ' + gateType + ' pour ce cas.');
         return;
       }
 
